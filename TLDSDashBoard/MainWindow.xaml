@@ -27,19 +27,22 @@
 
                 <views:TopbarView Grid.Row="0"/>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="28,22">
-                        <views:KpiRowView/>
-                        <views:MetricGroupView Data="{Binding TxChart}" Margin="0,20,0,0"/>
-                        <views:MetricGroupView Data="{Binding RxChart}" Margin="0,20,0,0"/>
-                        <views:AlarmLogView Margin="0,20,0,0"/>
-                    </StackPanel>
-                </ScrollViewer>
+                <!-- Not wrapped in a ScrollViewer: the list pages need their DataGrid to fill/scroll this
+                     area internally (a "*" row inside a ScrollViewer collapses to content size). GraphPageView
+                     scrolls itself internally instead, since its lane-chart content can be taller than the window. -->
+                <Grid Grid.Row="1" Margin="28,22">
+                    <views:TrainOccupancyView Visibility="{Binding IsOccupancyActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <views:TrackFaultListView Visibility="{Binding IsTrackFaultActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <views:LevelRecordListView Visibility="{Binding IsLevelRecordActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <views:GraphPageView Visibility="{Binding IsGraphActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <views:GraphDetailSearchView Visibility="{Binding IsGraphSearchActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </Grid>
             </Grid>
         </Grid>
 
         <!-- Overlays -->
         <views:DrillModalView/>
+        <views:HourlyStatusModalView/>
         <views:ToastView/>
 
     </Grid>

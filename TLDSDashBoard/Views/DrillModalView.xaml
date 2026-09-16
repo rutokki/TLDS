@@ -9,7 +9,7 @@
           Visibility="{Binding DrillData, Converter={StaticResource NullToVisibilityConverter}}"
           MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
         <Border x:Name="Card" Background="{StaticResource PanelBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
-                BorderThickness="1" CornerRadius="14" Padding="26,24" MaxWidth="760"
+                BorderThickness="1" CornerRadius="14" Padding="26,24" Width="1080"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 MouseLeftButtonDown="Card_MouseLeftButtonDown">
             <Border.Effect>
@@ -24,15 +24,60 @@
                     <TextBlock DockPanel.Dock="Right" Text="✕" FontSize="16" Cursor="Hand"
                                Foreground="{StaticResource TextSecondaryBrush}" Padding="8,2"
                                MouseLeftButtonUp="CloseButton_MouseLeftButtonUp"/>
+                    <TextBlock DockPanel.Dock="Right" Text="휠: 확대·축소 / 드래그: 이동" FontSize="11" Margin="0,0,16,0"
+                               Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                        <Rectangle Width="14" Height="2" Fill="{StaticResource CheckedLineBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="점검" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,10,0"/>
+                        <Rectangle Width="14" Height="2" Fill="{StaticResource MinimumLineBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="최소" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,0,0"/>
+                    </StackPanel>
                 </DockPanel>
 
-                <Viewbox Stretch="Fill" Height="240">
-                    <Grid Width="900" Height="240" Background="{StaticResource BgBrush}">
-                        <Path Data="{Binding DrillData.BigPath, Converter={StaticResource PathDataConverter}}"
-                              Stroke="{Binding DrillData.ColorHex, Converter={StaticResource HexToBrushConverter}}"
-                              StrokeThickness="2.5"/>
+                <!-- Chart itself is drawn in a fixed 900×240 virtual space (Viewbox stretches it to whatever
+                     screen size we give it). The overlay Grid on top is sized in REAL screen pixels and
+                     handles all mouse interaction — same split MetricGroupView uses for its hover crosshair,
+                     needed because mapping a mouse position to a data index has to use real pixel width. -->
+                <Grid>
+                    <Viewbox Stretch="Fill" Height="360">
+                        <Grid Width="900" Height="240" Background="{StaticResource BgBrush}">
+                            <Path Data="{Binding DrillData.CheckedLinePath, Converter={StaticResource PathDataConverter}}"
+                                  Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                            <Path Data="{Binding DrillData.MinimumLinePath, Converter={StaticResource PathDataConverter}}"
+                                  Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                            <Path Data="{Binding DrillData.BigPath, Converter={StaticResource PathDataConverter}}"
+                                  Stroke="{Binding DrillData.ColorHex, Converter={StaticResource HexToBrushConverter}}"
+                                  StrokeThickness="2.5"/>
+                        </Grid>
+                    </Viewbox>
+
+                    <Grid x:Name="ChartArea" Background="Transparent" Height="360" Cursor="SizeWE"
+                          MouseMove="ChartArea_MouseMove" MouseLeave="ChartArea_MouseLeave"
+                          MouseWheel="ChartArea_MouseWheel"
+                          MouseLeftButtonDown="ChartArea_MouseLeftButtonDown"
+                          MouseLeftButtonUp="ChartArea_MouseLeftButtonUp">
+                        <Line x:Name="CrosshairLine" Y1="0" Stroke="White"
+                              StrokeThickness="1" StrokeDashArray="3,2" Visibility="Collapsed" IsHitTestVisible="False"/>
+
+                        <Border Visibility="{Binding DrillData.HoverValue, Converter={StaticResource NullToVisibilityConverter}}"
+                                Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                                BorderThickness="1" CornerRadius="5" Padding="8,4" Margin="8"
+                                HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
+                            <StackPanel>
+                                <TextBlock Text="{Binding DrillData.HoverTimeLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
+                                           Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{Binding DrillData.HoverValue}" FontSize="13" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                                BorderThickness="1" CornerRadius="5" Padding="8,4" Margin="8"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" IsHitTestVisible="False">
+                            <TextBlock Text="{Binding DrillData.WindowLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Border>
                     </Grid>
-                </Viewbox>
+                </Grid>
 
                 <DockPanel LastChildFill="False" Margin="0,16,0,0">
                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
@@ -48,12 +93,15 @@
                                 <Run Text="{Binding DrillData.Max, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding DrillData.Unit, Mode=OneWay}"/>
                             </TextBlock>
                         </StackPanel>
-                        <StackPanel>
+                        <StackPanel Margin="0,0,24,0">
                             <TextBlock Text="AVG" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold">
                                 <Run Text="{Binding DrillData.Avg, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding DrillData.Unit, Mode=OneWay}"/>
                             </TextBlock>
                         </StackPanel>
+                        <Button Style="{StaticResource FilterActionButton}" Click="ResetZoom_Click" VerticalAlignment="Center">
+                            <TextBlock Text="줌 초기화"/>
+                        </Button>
                     </StackPanel>
                     <Button DockPanel.Dock="Right" Style="{StaticResource FlatButton}" Command="{Binding ExportCsvCommand}"
                             Foreground="{StaticResource ExportBtnTextBrush}" FontSize="12.5" VerticalAlignment="Center">

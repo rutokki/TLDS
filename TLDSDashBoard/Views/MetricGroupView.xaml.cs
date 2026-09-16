@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using TLDSDashBoard.ViewModels.Items;
 
@@ -32,6 +33,7 @@ public partial class MetricGroupView : UserControl
     public MetricGroupView()
     {
         InitializeComponent();
+        HoverTooltip.PlacementTarget = ChartArea;
     }
 
     private void ChartArea_MouseMove(object sender, MouseEventArgs e)
@@ -54,16 +56,19 @@ public partial class MetricGroupView : UserControl
         CrosshairLine.Y2 = ChartArea.ActualHeight;
         CrosshairLine.Visibility = Visibility.Visible;
 
-        data.HoverTimeLabel = data.WindowTimestamps[index].ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+        data.HoverTimeLabel = data.WindowTimestamps[index].ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
         foreach (var series in data.Series)
         {
             series.ShowValueAt(index);
         }
+
+        PositionTooltip(pos);
     }
 
     private void ChartArea_MouseLeave(object sender, MouseEventArgs e)
     {
         CrosshairLine.Visibility = Visibility.Collapsed;
+        HoverTooltip.IsOpen = false;
         var data = Data;
         if (data is null) return;
 
@@ -72,5 +77,17 @@ public partial class MetricGroupView : UserControl
         {
             series.ResetToLatest();
         }
+    }
+
+    /// <summary>Moves the tooltip to follow the cursor (offset down-right). Popup.HorizontalOffset/
+    /// VerticalOffset reposition its separate top-level window directly — no Measure/clamp dance needed,
+    /// and no risk of the reposition itself perturbing ChartArea's hit-testing (see the Popup comment
+    /// in the XAML for why a plain repositioned Border caused the jumpy/stuck behavior this replaces).</summary>
+    private void PositionTooltip(Point pos)
+    {
+        const double offset = 16;
+        HoverTooltip.HorizontalOffset = pos.X + offset;
+        HoverTooltip.VerticalOffset = pos.Y + offset;
+        HoverTooltip.IsOpen = true;
     }
 }

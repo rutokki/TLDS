@@ -1,0 +1,118 @@
+<UserControl x:Class="TLDSDashBoard.Views.SimpleDatePicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:items="clr-namespace:TLDSDashBoard.ViewModels.Items"
+             x:Name="Root"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style x:Key="CalendarNavButton" TargetType="Button" BasedOn="{StaticResource FlatButton}">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+
+        <Style x:Key="CalendarDayButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsCurrentMonth}" Value="False">
+                    <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsToday}" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid DataContext="{Binding ElementName=Root}">
+        <ToggleButton x:Name="ToggleBtn" Cursor="Hand">
+            <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="{StaticResource BgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="8,5">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding SelectedDate, RelativeSource={RelativeSource AncestorType=UserControl}, StringFormat=yyyy-MM-dd}"
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontSize="12.5"/>
+                            <TextBlock Text="&#128197;" FontSize="11" Margin="8,0,0,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </ToggleButton.Template>
+        </ToggleButton>
+
+        <Popup x:Name="Popup" IsOpen="{Binding IsChecked, ElementName=ToggleBtn, Mode=TwoWay}"
+               StaysOpen="False" AllowsTransparency="True" Placement="Bottom" PopupAnimation="Slide">
+            <Border Background="{StaticResource PanelBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="10">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="20" ShadowDepth="4"/>
+                </Border.Effect>
+                <StackPanel Width="224">
+                    <Grid Margin="2,0,2,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="◀" Style="{StaticResource CalendarNavButton}" Click="PrevMonth_Click"/>
+                        <TextBlock x:Name="HeaderTextBlock" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <Button Grid.Column="2" Content="▶" Style="{StaticResource CalendarNavButton}" Click="NextMonth_Click"/>
+                    </Grid>
+
+                    <UniformGrid Columns="7" Margin="0,0,0,4">
+                        <TextBlock Text="일" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="월" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="화" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="수" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="목" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="금" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="토" HorizontalAlignment="Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </UniformGrid>
+
+                    <ItemsControl ItemsSource="{Binding Days}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="7"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type items:CalendarDayCell}">
+                                <Button Content="{Binding Label}" Style="{StaticResource CalendarDayButtonStyle}"
+                                        Tag="{Binding Date}" Click="Day_Click"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

@@ -58,7 +58,17 @@
     </UserControl.Resources>
 
     <StackPanel DataContext="{Binding ElementName=Root}">
-        <TextBlock Text="{Binding Data.Header}" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
+        <DockPanel LastChildFill="False" Margin="0,0,0,10">
+            <TextBlock DockPanel.Dock="Left" Text="{Binding Data.Header}" Style="{StaticResource SectionTitle}"/>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Rectangle Width="14" Height="2" Fill="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="측정" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,14,0"/>
+                <Rectangle Width="14" Height="2" Fill="{StaticResource CheckedLineBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="점검" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,14,0"/>
+                <Rectangle Width="14" Height="2" Fill="{StaticResource MinimumLineBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="최소" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,0,0"/>
+            </StackPanel>
+        </DockPanel>
 
         <Border Background="{StaticResource PanelBgBrush}" BorderBrush="{StaticResource BorderBrush1}"
                 BorderThickness="1" CornerRadius="10" Padding="16,14">
@@ -101,6 +111,10 @@
                                         <Grid>
                                             <Viewbox Stretch="Fill">
                                                 <Canvas Width="900" Height="90">
+                                                    <Path Data="{Binding CheckedLinePath, Converter={StaticResource PathDataConverter}}"
+                                                          Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                                                    <Path Data="{Binding MinimumLinePath, Converter={StaticResource PathDataConverter}}"
+                                                          Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
                                                     <Path Data="{Binding Path, Converter={StaticResource PathDataConverter}}"
                                                           Stroke="{Binding ColorHex, Converter={StaticResource HexToBrushConverter}}"
                                                           StrokeThickness="2"/>
@@ -122,16 +136,42 @@
                              stretches to the same size as the ItemsControl above it (same Grid cell). -->
                         <Grid x:Name="ChartArea" Background="Transparent"
                               MouseMove="ChartArea_MouseMove" MouseLeave="ChartArea_MouseLeave">
-                            <Line x:Name="CrosshairLine" Y1="0" Stroke="{StaticResource BorderLightBrush}"
+                            <Line x:Name="CrosshairLine" Y1="0" Stroke="White"
                                   StrokeThickness="1" StrokeDashArray="3,2" Visibility="Collapsed" IsHitTestVisible="False"/>
 
-                            <Border Visibility="{Binding Data.HoverTimeLabel, Converter={StaticResource NullToVisibilityConverter}}"
-                                    Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
-                                    BorderThickness="1" CornerRadius="5" Padding="6,3" Margin="6"
-                                    HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
-                                <TextBlock Text="{Binding Data.HoverTimeLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
-                                           Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </Border>
+                            <!-- Mouse-following tooltip, implemented as a Popup (its own top-level window layer)
+                                 instead of a plain positioned Border: a Border repositioned via Margin sits in the
+                                 SAME visual tree ChartArea is hit-testing against, so moving it under a stationary
+                                 cursor could itself trigger WPF's synthetic mouse-move re-evaluation and fight the
+                                 next real MouseMove, producing exactly the jumpy/stuck behavior seen when that was
+                                 tried. A Popup renders outside that tree, so repositioning it via
+                                 HorizontalOffset/VerticalOffset in code-behind can't feed back into hit-testing. -->
+                            <Popup x:Name="HoverTooltip" Placement="Relative" AllowsTransparency="True"
+                                   IsHitTestVisible="False" Focusable="False" StaysOpen="True">
+                                <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                                        BorderThickness="1" CornerRadius="6" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Data.HoverTimeLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <ItemsControl ItemsSource="{Binding Data.Series}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,1">
+                                                        <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
+                                                                 Fill="{Binding ColorHex, Converter={StaticResource HexToBrushConverter}}"/>
+                                                        <TextBlock FontSize="10.5" FontFamily="{StaticResource MonoFont}">
+                                                            <Run Text="{Binding Name, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                            <Run Text=" : "/>
+                                                            <Run Text="{Binding Value, Mode=OneWay}" FontWeight="SemiBold"/>
+                                                            <Run Text="{Binding Unit, Mode=OneWay}" Foreground="{StaticResource TextDimBrush}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
                         </Grid>
                     </Grid>
                 </Grid>

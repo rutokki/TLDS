@@ -1,0 +1,33 @@
+<UserControl x:Class="TLDSDashBoard.Views.DateRangeFilterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:views="clr-namespace:TLDSDashBoard.Views"
+             x:Name="Root"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="TwoDigit">
+            <TextBlock Text="{Binding StringFormat=00}" Foreground="{StaticResource TextPrimaryBrush}"/>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <StackPanel DataContext="{Binding ElementName=Root}" Orientation="Horizontal">
+        <views:SimpleDatePicker SelectedDate="{Binding Filter.StartDate}" Margin="0,0,4,0"/>
+        <ComboBox ItemsSource="{Binding Filter.Hours}" SelectedItem="{Binding Filter.StartHour}"
+                  ItemTemplate="{StaticResource TwoDigit}" MinWidth="52" Margin="0,0,2,0"/>
+        <TextBlock Text=":" Style="{StaticResource FilterLabel}"/>
+        <ComboBox ItemsSource="{Binding Filter.Minutes}" SelectedItem="{Binding Filter.StartMinute}"
+                  ItemTemplate="{StaticResource TwoDigit}" MinWidth="52" Margin="0,0,16,0"/>
+
+        <TextBlock Text="~" Style="{StaticResource FilterLabel}"/>
+
+        <views:SimpleDatePicker SelectedDate="{Binding Filter.EndDate}" Margin="0,0,4,0"/>
+        <ComboBox ItemsSource="{Binding Filter.Hours}" SelectedItem="{Binding Filter.EndHour}"
+                  ItemTemplate="{StaticResource TwoDigit}" MinWidth="52" Margin="0,0,2,0"/>
+        <TextBlock Text=":" Style="{StaticResource FilterLabel}"/>
+        <ComboBox ItemsSource="{Binding Filter.Minutes}" SelectedItem="{Binding Filter.EndMinute}"
+                  ItemTemplate="{StaticResource TwoDigit}"/>
+    </StackPanel>
+</UserControl>
