@@ -7,9 +7,7 @@ public enum AlarmSeverity
     Critical
 }
 
-/// <summary>
-/// One row of the alarm/event log table.
-/// </summary>
+/// <summary>One row of the Overview page's "최근 10분 알람" log — scoped to the same 10-minute window as the TX/RX charts above it.</summary>
 public sealed class AlarmEventModel
 {
     public required string Time { get; init; }

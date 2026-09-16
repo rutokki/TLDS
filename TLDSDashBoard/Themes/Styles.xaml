@@ -8,6 +8,14 @@
     <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Mono,Consolas,Consolas</FontFamily>
 
+    <!-- ComboBox's SelectionBoxItemTemplate (used by our custom ComboBox template below to render the
+         closed box) is only auto-populated from ItemTemplate, NOT from DisplayMemberPath — with only
+         DisplayMemberPath set, the closed box falls back to the raw item's ToString(). So every ComboBox
+         bound to a Station/TrackCircuit (both expose Name) uses this ItemTemplate instead of DisplayMemberPath. -->
+    <DataTemplate x:Key="NameItemTemplate">
+        <TextBlock Text="{Binding Name}" Foreground="{StaticResource TextPrimaryBrush}"/>
+    </DataTemplate>
+
     <!-- ===================== Base implicit styles ===================== -->
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
@@ -32,15 +40,18 @@
         </Setter>
     </Style>
 
+    <!-- This style used to hardcode Width=10 on the Track, which is correct for a vertical scrollbar's
+         thickness but wrong for a horizontal one — there "Width" is the track's LENGTH, so it forced every
+         horizontal scrollbar down to a 10px-long sliver. The app only ever had vertical ScrollViewers before
+         DataGrid was introduced, so this went unnoticed. Now orientation-aware: thickness is Width for
+         vertical, Height for horizontal, and the Track itself follows the ScrollBar's real Orientation. -->
     <Style x:Key="{x:Type ScrollBar}" TargetType="ScrollBar">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Width" Value="10"/>
-        <Setter Property="MinWidth" Value="10"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
                     <Grid Background="Transparent">
-                        <Track Name="PART_Track" IsDirectionReversed="true" Width="10">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="Vertical">
                             <Track.Thumb>
                                 <Thumb Style="{StaticResource DarkScrollBarThumb}"/>
                             </Track.Thumb>
@@ -52,9 +63,25 @@
                             </Track.IncreaseRepeatButton>
                         </Track>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter TargetName="PART_Track" Property="Orientation" Value="Horizontal"/>
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Vertical">
+                <Setter Property="Width" Value="10"/>
+                <Setter Property="MinWidth" Value="10"/>
+            </Trigger>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Height" Value="10"/>
+                <Setter Property="MinHeight" Value="10"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ===================== Card container ===================== -->
@@ -80,35 +107,41 @@
     </Style>
 
     <!-- ===================== Text presets ===================== -->
-    <Style x:Key="LabelUppercase" TargetType="TextBlock">
+    <!-- Every keyed TextBlock style below is BasedOn the implicit TextBlock style so it inherits
+         Foreground=TextPrimaryBrush from it — an explicit Style="{StaticResource X}" otherwise replaces
+         the implicit style entirely instead of layering on top of it, so without BasedOn here, any of
+         these that don't set their own Foreground silently fall back to TextBlock's real default (black).
+         SectionTitle/MonoValueBig/MonoValueMedium were exactly that: titles and KPI numbers rendering in
+         black because they never set Foreground and had nothing to inherit it from. -->
+    <Style x:Key="LabelUppercase" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="11.5"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="Typography.Capitals" Value="AllSmallCaps"/>
     </Style>
 
-    <Style x:Key="SectionTitle" TargetType="TextBlock">
+    <Style x:Key="SectionTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
-    <Style x:Key="MonoValueBig" TargetType="TextBlock">
+    <Style x:Key="MonoValueBig" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
         <Setter Property="FontSize" Value="24"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
-    <Style x:Key="MonoValueMedium" TargetType="TextBlock">
+    <Style x:Key="MonoValueMedium" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
-    <Style x:Key="HintText" TargetType="TextBlock">
+    <Style x:Key="HintText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
     </Style>
 
-    <Style x:Key="MonoSmall" TargetType="TextBlock">
+    <Style x:Key="MonoSmall" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
@@ -136,6 +169,179 @@
             </Setter.Value>
         </Setter>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Filter-bar action button (조회/CSV 저장/인쇄/닫기) — same ghost look as FlatButton but with a light border, since these buttons sit directly on the page background rather than inside a popup. -->
+    <Style x:Key="FilterActionButton" TargetType="Button" BasedOn="{StaticResource FlatButton}">
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+        <Setter Property="Padding" Value="12,7"/>
+        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===================== Form controls (filter bars) ===================== -->
+
+    <!-- ComboBox's default theme hardcodes the drop-down popup as a plain white system popup, which combined
+         with our white Foreground made dropdown text unreadable — so unlike the other controls here, this needs
+         a full ControlTemplate (property Setters alone don't reach the popup's own background). -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BorderLightBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource BgBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="MinWidth" Value="110"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton x:Name="ToggleBtn" Focusable="False" ClickMode="Press"
+                                      Background="{TemplateBinding Background}"
+                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                      BorderThickness="{TemplateBinding BorderThickness}"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                            BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"
+                                            BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource TemplatedParent}}"
+                                            CornerRadius="6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="1" Text="▾" Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Margin="0,0,10,0" VerticalAlignment="Center" FontSize="10"/>
+                                        </Grid>
+                                    </Border>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                        <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                            <Border Background="{StaticResource BgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                                    BorderThickness="1" CornerRadius="6" MaxHeight="280"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="20" ShadowDepth="4"/>
+                                </Border.Effect>
+                                <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <!-- Same class of bug as the ComboBox/DatePicker above: setting Foreground alone doesn't reliably
+             reach the Content text in CheckBox's default template. TextElement.Foreground forces it. -->
+        <Setter Property="TextElement.Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="Margin" Value="0,5"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="FilterLabel" TargetType="TextBlock" BasedOn="{StaticResource HintText}">
+        <Setter Property="Margin" Value="0,0,6,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ===================== DataGrid (조회 결과 표) ===================== -->
+    <Style TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource SidebarBgBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="Padding" Value="8,7"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush1}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+
+    <Style TargetType="DataGridCell">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="DataGrid">
+        <Setter Property="Background" Value="{StaticResource PanelBgBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush1}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="RowBackground" Value="{StaticResource PanelBgBrush}"/>
+        <Setter Property="AlternatingRowBackground" Value="{StaticResource BgBrush}"/>
+        <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BorderBrush1}"/>
+        <Setter Property="HeadersVisibility" Value="Column"/>
+        <Setter Property="AutoGenerateColumns" Value="False"/>
+        <Setter Property="CanUserAddRows" Value="False"/>
+        <Setter Property="CanUserDeleteRows" Value="False"/>
+        <Setter Property="CanUserReorderColumns" Value="False"/>
+        <Setter Property="CanUserResizeRows" Value="False"/>
+        <Setter Property="IsReadOnly" Value="True"/>
+        <Setter Property="RowHeight" Value="30"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
     </Style>
 
 </ResourceDictionary>

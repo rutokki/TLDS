@@ -9,7 +9,7 @@
         <DockPanel LastChildFill="False">
 
             <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                <TextBlock Text="그래프 대시보드" FontSize="17" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding ActivePageTitle}" FontSize="17" FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding ClockLabel}" FontFamily="{StaticResource MonoFont}" FontSize="12"
                            Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
                 <TextBlock Text="{Binding DataSourceLabel}" FontSize="11"

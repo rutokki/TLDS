@@ -40,4 +40,9 @@
     <SolidColorBrush x:Key="ExportBtnBorderBrush" Color="#803D5A9E"/>
     <SolidColorBrush x:Key="ExportBtnTextBrush" Color="#FFA8BCE8"/>
 
+    <!-- 점검/최소 reference-line overlays on the TX/RX graphs — bright/saturated on purpose so they read
+         clearly as reference lines against the dark background, distinct from the softer status colors above. -->
+    <SolidColorBrush x:Key="CheckedLineBrush" Color="#FFFFD740"/>
+    <SolidColorBrush x:Key="MinimumLineBrush" Color="#FFFF5252"/>
+
 </ResourceDictionary>

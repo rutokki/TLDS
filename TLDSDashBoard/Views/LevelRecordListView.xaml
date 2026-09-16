@@ -1,0 +1,83 @@
+<UserControl x:Class="TLDSDashBoard.Views.LevelRecordListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:views="clr-namespace:TLDSDashBoard.Views"
+             mc:Ignorable="d">
+
+    <!-- DataContext is overridden here (not on the UserControl root) so a Visibility binding set from
+         outside (against MainViewModel) keeps working — see MetricGroupView for the same pattern. -->
+    <Grid DataContext="{Binding LevelRecordList}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Filter bar -->
+        <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,16">
+            <StackPanel>
+                <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="역 선택" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding Stations}" SelectedItem="{Binding SelectedStation}"
+                              ItemTemplate="{StaticResource NameItemTemplate}" Margin="0,0,20,6"/>
+
+                    <TextBlock Text="궤도 선택" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding Tracks}" SelectedItem="{Binding SelectedTrack}"
+                              ItemTemplate="{StaticResource NameItemTemplate}" Margin="0,0,20,6"/>
+
+                    <TextBlock Text="기록일자" Style="{StaticResource FilterLabel}"/>
+                    <views:SimpleDatePicker SelectedDate="{Binding RecordDate}" Margin="0,0,8,6"/>
+                    <ComboBox ItemsSource="{Binding HourRanges}" SelectedItem="{Binding SelectedHourRange}" Margin="0,0,0,6"/>
+                </WrapPanel>
+
+                <WrapPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource FilterActionButton}" Command="{Binding SearchCommand}" Margin="0,0,8,0">
+                        <TextBlock Text="조회"/>
+                    </Button>
+                    <Button Style="{StaticResource FilterActionButton}" Command="{Binding ExportCsvCommand}" Margin="0,0,16,0">
+                        <TextBlock Text="CSV 저장"/>
+                    </Button>
+                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource HintText}" VerticalAlignment="Center"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- RX 6채널 × 표준/측정/점검/최소 = 24개 측정컬럼 -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0">
+            <DataGrid ItemsSource="{Binding Results}" BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="RFP-표준" Binding="{Binding Rfp.Standard, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RFP-측정" Binding="{Binding Rfp.Measured, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RFP-점검" Binding="{Binding Rfp.Checked, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RFP-최소" Binding="{Binding Rfp.Minimum, StringFormat=F1}" Width="80"/>
+
+                    <DataGridTextColumn Header="RSP-표준" Binding="{Binding Rsp.Standard, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RSP-측정" Binding="{Binding Rsp.Measured, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RSP-점검" Binding="{Binding Rsp.Checked, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RSP-최소" Binding="{Binding Rsp.Minimum, StringFormat=F1}" Width="80"/>
+
+                    <DataGridTextColumn Header="RHZ-표준" Binding="{Binding Rhz.Standard, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="RHZ-측정" Binding="{Binding Rhz.Measured, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="RHZ-점검" Binding="{Binding Rhz.Checked, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="RHZ-최소" Binding="{Binding Rhz.Minimum, StringFormat=F2}" Width="80"/>
+
+                    <DataGridTextColumn Header="RA-표준" Binding="{Binding Ra.Standard, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="RA-측정" Binding="{Binding Ra.Measured, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="RA-점검" Binding="{Binding Ra.Checked, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="RA-최소" Binding="{Binding Ra.Minimum, StringFormat=F2}" Width="80"/>
+
+                    <DataGridTextColumn Header="RV1-표준" Binding="{Binding Rv1.Standard, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RV1-측정" Binding="{Binding Rv1.Measured, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RV1-점검" Binding="{Binding Rv1.Checked, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RV1-최소" Binding="{Binding Rv1.Minimum, StringFormat=F1}" Width="80"/>
+
+                    <DataGridTextColumn Header="RV2-표준" Binding="{Binding Rv2.Standard, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RV2-측정" Binding="{Binding Rv2.Measured, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RV2-점검" Binding="{Binding Rv2.Checked, StringFormat=F1}" Width="80"/>
+                    <DataGridTextColumn Header="RV2-최소" Binding="{Binding Rv2.Minimum, StringFormat=F1}" Width="80"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

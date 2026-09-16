@@ -2,11 +2,11 @@ namespace TLDSDashBoard.Models;
 
 /// <summary>
 /// The twelve TX/RX telemetry series, one sample per <see cref="Timestamps"/> entry (DB-backed:
-/// one row per minute, all 12 channels sampled together — see Services/SqliteChannelDataRepository).
+/// one row per second, all 12 channels sampled together — see Services/SqliteChannelDataRepository).
 /// </summary>
 public sealed class ChannelDataSet
 {
-    /// <summary>Sample time for index i of every channel array below (same length as each array). 1-minute sampling interval.</summary>
+    /// <summary>Sample time for index i of every channel array below (same length as each array). 1-second sampling interval.</summary>
     public required DateTime[] Timestamps { get; init; }
 
     public required double[] TAC { get; init; } // 송신 AC

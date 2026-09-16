@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace TLDSDashBoard.Views;
 
-public partial class KpiRowView : UserControl
+public partial class GraphPageView : UserControl
 {
-    public KpiRowView()
+    public GraphPageView()
     {
         InitializeComponent();
     }

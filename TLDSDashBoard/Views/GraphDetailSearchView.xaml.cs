@@ -6,54 +6,29 @@ using TLDSDashBoard.ViewModels;
 namespace TLDSDashBoard.Views;
 
 /// <summary>
-/// Full-screen drill-in modal. Clicking the dim overlay closes it; clicking the card itself does not
-/// (event is marked handled before it bubbles to the overlay), matching the original prototype's
-/// stopPropagation click-outside-to-close behavior.
-///
-/// The chart area also supports mouse-wheel zoom (toward the cursor), left-drag pan, and a continuous
-/// hover readout (crosshair + value/time chip) — all driven through MainViewModel.ZoomDrill/PanDrill/
-/// UpdateDrillHover, which own the actual zoom-window state (this view only ever reports fractions of its
-/// own on-screen width, never sample counts, since it has no idea how many samples are currently visible).
+/// 그래프 상세검색 page — same mouse-wheel zoom / drag pan / hover crosshair as DrillModalView, but for the
+/// single combined 12-channel chart shown inline on this page. See DrillModalView for the interaction
+/// design notes; this is the same logic against GraphDetailSearchViewModel instead of MainViewModel.
 /// </summary>
-public partial class DrillModalView : UserControl
+public partial class GraphDetailSearchView : UserControl
 {
     private bool _isDragging;
     private double _lastDragX;
 
-    public DrillModalView()
+    public GraphDetailSearchView()
     {
         InitializeComponent();
+        HoverTooltip.PlacementTarget = ChartArea;
     }
 
-    private MainViewModel? ViewModel => DataContext as MainViewModel;
-
-    private void Overlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        ViewModel?.CloseDrillCommand.Execute(null);
-    }
-
-    private void Card_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        e.Handled = true;
-    }
-
-    private void CloseButton_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        ViewModel?.CloseDrillCommand.Execute(null);
-        e.Handled = true;
-    }
-
-    private void ResetZoom_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel?.ResetDrillZoom();
-    }
+    private GraphDetailSearchViewModel? ViewModel => (DataContext as MainViewModel)?.GraphDetailSearch;
 
     private void ChartArea_MouseWheel(object sender, MouseWheelEventArgs e)
     {
         if (ChartArea.ActualWidth <= 0) return;
         double fraction = Clamp01(e.GetPosition(ChartArea).X / ChartArea.ActualWidth);
-        double factor = e.Delta > 0 ? 0.8 : 1.25; // wheel up = zoom in (smaller window), wheel down = zoom out
-        ViewModel?.ZoomDrill(factor, fraction);
+        double factor = e.Delta > 0 ? 0.8 : 1.25;
+        ViewModel?.Zoom(factor, fraction);
         e.Handled = true;
     }
 
@@ -81,12 +56,13 @@ public partial class DrillModalView : UserControl
         CrosshairLine.X2 = pos.X;
         CrosshairLine.Y2 = ChartArea.ActualHeight;
         CrosshairLine.Visibility = Visibility.Visible;
-        ViewModel?.UpdateDrillHover(fraction);
+        ViewModel?.UpdateHover(fraction);
+        PositionTooltip(pos);
 
         if (_isDragging)
         {
             double fractionDelta = (pos.X - _lastDragX) / ChartArea.ActualWidth;
-            ViewModel?.PanDrill(fractionDelta);
+            ViewModel?.Pan(fractionDelta);
             _lastDragX = pos.X;
         }
     }
@@ -94,7 +70,20 @@ public partial class DrillModalView : UserControl
     private void ChartArea_MouseLeave(object sender, MouseEventArgs e)
     {
         CrosshairLine.Visibility = Visibility.Collapsed;
-        ViewModel?.ClearDrillHover();
+        HoverTooltip.IsOpen = false;
+        ViewModel?.ClearHover();
+    }
+
+    /// <summary>Moves the tooltip to follow the cursor (offset down-right). Popup.HorizontalOffset/
+    /// VerticalOffset reposition its separate top-level window directly — no Measure/clamp dance needed,
+    /// and no risk of the reposition itself perturbing ChartArea's hit-testing (see the Popup comment
+    /// in the XAML for why a plain repositioned Border caused the jumpy/stuck behavior this replaces).</summary>
+    private void PositionTooltip(Point pos)
+    {
+        const double offset = 16;
+        HoverTooltip.HorizontalOffset = pos.X + offset;
+        HoverTooltip.VerticalOffset = pos.Y + offset;
+        HoverTooltip.IsOpen = true;
     }
 
     private static double Clamp01(double v) => v < 0 ? 0 : v > 1 ? 1 : v;
