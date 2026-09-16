@@ -1,0 +1,69 @@
+<UserControl x:Class="TLDSDashBoard.Views.DrillModalView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+
+    <Grid x:Name="Overlay" Background="{StaticResource OverlayDimBrush}"
+          Visibility="{Binding DrillData, Converter={StaticResource NullToVisibilityConverter}}"
+          MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+        <Border x:Name="Card" Background="{StaticResource PanelBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                BorderThickness="1" CornerRadius="14" Padding="26,24" MaxWidth="760"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                MouseLeftButtonDown="Card_MouseLeftButtonDown">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="32" ShadowDepth="8" Direction="270"/>
+            </Border.Effect>
+            <StackPanel>
+                <DockPanel LastChildFill="False" Margin="0,0,0,16">
+                    <TextBlock DockPanel.Dock="Left" FontSize="16" FontWeight="SemiBold">
+                        <Run Text="{Binding DrillData.Name, Mode=OneWay}"/>
+                        <Run Text=" — 상세 보기"/>
+                    </TextBlock>
+                    <TextBlock DockPanel.Dock="Right" Text="✕" FontSize="16" Cursor="Hand"
+                               Foreground="{StaticResource TextSecondaryBrush}" Padding="8,2"
+                               MouseLeftButtonUp="CloseButton_MouseLeftButtonUp"/>
+                </DockPanel>
+
+                <Viewbox Stretch="Fill" Height="240">
+                    <Grid Width="900" Height="240" Background="{StaticResource BgBrush}">
+                        <Path Data="{Binding DrillData.BigPath, Converter={StaticResource PathDataConverter}}"
+                              Stroke="{Binding DrillData.ColorHex, Converter={StaticResource HexToBrushConverter}}"
+                              StrokeThickness="2.5"/>
+                    </Grid>
+                </Viewbox>
+
+                <DockPanel LastChildFill="False" Margin="0,16,0,0">
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                        <StackPanel Margin="0,0,24,0">
+                            <TextBlock Text="MIN" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold">
+                                <Run Text="{Binding DrillData.Min, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding DrillData.Unit, Mode=OneWay}"/>
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,24,0">
+                            <TextBlock Text="MAX" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold">
+                                <Run Text="{Binding DrillData.Max, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding DrillData.Unit, Mode=OneWay}"/>
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="AVG" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold">
+                                <Run Text="{Binding DrillData.Avg, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding DrillData.Unit, Mode=OneWay}"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                    <Button DockPanel.Dock="Right" Style="{StaticResource FlatButton}" Command="{Binding ExportCsvCommand}"
+                            Foreground="{StaticResource ExportBtnTextBrush}" FontSize="12.5" VerticalAlignment="Center">
+                        <TextBlock Text="Export CSV"/>
+                    </Button>
+                </DockPanel>
+
+                <TextBlock Text="{Binding DrillData.RangeLabel, Mode=OneWay}" FontSize="11"
+                           Foreground="{StaticResource TextDimBrush}" Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
