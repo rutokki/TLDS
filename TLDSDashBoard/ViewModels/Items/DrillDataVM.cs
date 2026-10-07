@@ -5,7 +5,7 @@ namespace TLDSDashBoard.ViewModels.Items;
 /// <summary>
 /// One channel's chart state. Used two ways: mutably by the drill-in modal (zoom/pan/hover all update
 /// it live while the modal stays open — see ChannelSeriesVM for the same reasoning), and as a plain
-/// once-computed snapshot by 그래프 상세검색's 12-channel grid (no zoom/pan there, so Hover* just stay
+/// once-computed snapshot by 그래프 상세검색's channel grid (no zoom/pan there, so Hover* just stay
 /// unset). Either way the shape is the same, so one class covers both instead of two near-duplicates.
 /// </summary>
 public sealed class DrillDataVM : ViewModelBase

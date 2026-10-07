@@ -141,6 +141,41 @@
         <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
     </Style>
 
+    <!-- Centered placeholder shown over an empty result area (before the first 조회, or when a 조회 returns
+         nothing) — so a blank grid/chart reads as "nothing queried yet" rather than as a broken screen. -->
+    <Style x:Key="EmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextAlignment" Value="Center"/>
+        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+    </Style>
+
+    <!-- Lane-chart max/min axis value, drawn on a small panel-colored backing so it stays readable where
+         it overlaps a dashed 점검/최소 reference line running along the lane's top or bottom edge. -->
+    <Style x:Key="LaneAxisLabelBox" TargetType="Border">
+        <Setter Property="Background" Value="#CC181C22"/>
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="Padding" Value="3,0"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+    </Style>
+    <Style x:Key="LaneAxisLabelText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="FontSize" Value="9.5"/>
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+    </Style>
+
+    <!-- Legend entry text next to the colored swatches (측정/점검/최소) — vertically centered on the swatch. -->
+    <Style x:Key="LegendText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="5,0,14,0"/>
+    </Style>
+
     <Style x:Key="MonoSmall" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
         <Setter Property="FontSize" Value="12"/>
@@ -309,12 +344,64 @@
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
     </Style>
 
+    <!-- 6채널(주파수 3 + 전압 3) 측정컬럼을 진짜 병합(colspan) 헤더로 보여주기 위한 커스텀 헤더 셀 스타일
+         (궤도 장애·경보 리스트, 레벨 기록 리스트). WPF DataGrid는 컬럼 헤더 병합을 기본 지원하지
+         않으므로, 네이티브 헤더는 숨기고(HeadersVisibility="None") 컬럼 폭과 정확히 일치하는
+         ColumnDefinition을 가진 별도 Grid를 DataGrid 위에 얹어 Grid.ColumnSpan으로 실제 셀을 합친다
+         — 1단 "송신"/"수신"(24컬럼 병합), 2단 채널명(4컬럼 병합), 3단 표준/측정/점검/최소(개별 컬럼).
+         식별 컬럼(궤도명칭 등)은 3개 행 전체를 세로로 병합(GroupHeaderCell)한다. -->
+    <Style x:Key="GroupHeaderCell" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SidebarBgBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush1}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="Padding" Value="4,2"/>
+    </Style>
+    <Style x:Key="TxGroupHeaderCell" TargetType="Border" BasedOn="{StaticResource GroupHeaderCell}">
+        <Setter Property="Background" Value="#334C9AFF"/>
+    </Style>
+    <Style x:Key="RxGroupHeaderCell" TargetType="Border" BasedOn="{StaticResource GroupHeaderCell}">
+        <Setter Property="Background" Value="#334EE1D6"/>
+    </Style>
+
+    <Style x:Key="ChannelGroupLabelText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="9"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="ChannelNameLabelText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="ChannelMetricLabelText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- The stock DataGridCell template ignores Padding/HorizontalContentAlignment, so text sat flush
+         against the left edge of every column (visibly misaligned under the centered headers). This
+         template actually applies them: values are centered in their column, vertically centered in the row. -->
     <Style TargetType="DataGridCell">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="Padding" Value="6,0"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
         <Setter Property="FontSize" Value="12"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>

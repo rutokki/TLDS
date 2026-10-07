@@ -9,4 +9,9 @@ public sealed class HourlyStatusCategoryGroup
     public required HourlyStatusCategory Category { get; init; }
     public required string Label { get; init; }
     public ObservableCollection<HourlyStatusEventRecord> Rows { get; } = new();
+
+    /// <summary>This category's own condition checkboxes — shown in place of the others' when this group
+    /// is <see cref="HourlyStatusViewModel.SelectedGroup"/>. Placeholder items for now (see
+    /// HourlyStatusViewModel.BuildConditionOptions); real per-category conditions are still TBD.</summary>
+    public required ObservableCollection<HourlyStatusConditionOption> ConditionOptions { get; init; }
 }

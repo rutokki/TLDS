@@ -46,80 +46,169 @@
             </StackPanel>
         </Border>
 
-        <!-- Wide measurement table (12 channels × 표준/측정/점검/최소 = 48 columns, plus 8 identifying columns) — horizontal scroll expected. -->
+        <!-- Wide measurement table (6 channels × 표준/측정/점검/최소 = 24 columns, plus 8 identifying columns).
+             The DataGrid's own headers are hidden (HeadersVisibility="None"); a separate Grid with
+             ColumnDefinitions matching each DataGridTextColumn's Width pixel-for-pixel sits above it and
+             uses real Grid.ColumnSpan to merge cells — 1단 주파수/전압(12컬럼씩), 2단 채널명(4컬럼), 3단
+             표준/측정/점검/최소(개별). The header lives in its own horizontal-only ScrollViewer, while the
+             DataGrid keeps its OWN vertical+horizontal scrolling (synced to the header via
+             MainGrid_ScrollChanged in code-behind) — putting the DataGrid inside a vertically-scrolling
+             outer ScrollViewer instead gives it an unbounded viewport and disables UI virtualization
+             entirely, which turns a wide date-range query (many alarm rows) into a memory/perf problem
+             (see LevelRecordListView, which hit this for real once its row counts grew). Column resize is
+             disabled (CanUserResizeColumns) since resizing would desync the header from the grid. -->
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0">
-            <DataGrid ItemsSource="{Binding Results}" BorderThickness="0">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="궤도명칭" Binding="{Binding TrackName}" Width="90"/>
-                    <DataGridTextColumn Header="일자" Binding="{Binding Date}" Width="90"/>
-                    <DataGridTextColumn Header="발생시각" Binding="{Binding OccurredAt}" Width="80"/>
-                    <DataGridTextColumn Header="복구시각" Binding="{Binding RecoveredAt}" Width="80"/>
-                    <DataGridTextColumn Header="장애종류" Binding="{Binding FaultType}" Width="90"/>
-                    <DataGridTextColumn Header="IMP" Binding="{Binding Imp}" Width="60"/>
-                    <DataGridTextColumn Header="AF" Binding="{Binding Af}" Width="60"/>
-                    <DataGridTextColumn Header="궤도타입" Binding="{Binding TrackType}" Width="70"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                    <DataGridTextColumn Header="TAC-표준" Binding="{Binding Tac.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TAC-측정" Binding="{Binding Tac.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TAC-점검" Binding="{Binding Tac.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TAC-최소" Binding="{Binding Tac.Minimum, StringFormat=F1}" Width="70"/>
+                <ScrollViewer Grid.Row="0" x:Name="HeaderScroll" HorizontalScrollBarVisibility="Hidden"
+                              VerticalScrollBarVisibility="Disabled" IsHitTestVisible="False">
+                    <Grid>
+<Grid.RowDefinitions>
+    <RowDefinition Height="Auto"/>
+    <RowDefinition Height="Auto"/>
+    <RowDefinition Height="Auto"/>
+</Grid.RowDefinitions>
+<Grid.ColumnDefinitions>
+    <ColumnDefinition Width="90"/>
+    <ColumnDefinition Width="90"/>
+    <ColumnDefinition Width="80"/>
+    <ColumnDefinition Width="80"/>
+    <ColumnDefinition Width="90"/>
+    <ColumnDefinition Width="60"/>
+    <ColumnDefinition Width="60"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <ColumnDefinition Width="70"/>
+    <!-- Spacer = DataGrid vertical scrollbar width (Styles.xaml ScrollBar Width=10): without it the header's
+         scrollable width is 10px shorter than the grid's, so at the far right the header stops early and
+         drifts out of line with the columns below. -->
+    <ColumnDefinition Width="10"/>
+</Grid.ColumnDefinitions>
 
-                    <DataGridTextColumn Header="TV-표준" Binding="{Binding Tv.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TV-측정" Binding="{Binding Tv.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TV-점검" Binding="{Binding Tv.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TV-최소" Binding="{Binding Tv.Minimum, StringFormat=F1}" Width="70"/>
 
-                    <DataGridTextColumn Header="TFP-표준" Binding="{Binding Tfp.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TFP-측정" Binding="{Binding Tfp.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TFP-점검" Binding="{Binding Tfp.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TFP-최소" Binding="{Binding Tfp.Minimum, StringFormat=F1}" Width="70"/>
+<!-- 식별 컬럼: 3개 행 전체를 세로로 병합 -->
+<Border Grid.Column="0" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="궤도명칭" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Column="1" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="일자" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Column="2" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="발생시각" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Column="3" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="복구시각" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Column="4" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="장애종류" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Column="5" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="IMP" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Column="6" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="AF" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Column="7" Grid.RowSpan="3" Style="{StaticResource GroupHeaderCell}"><TextBlock Text="궤도타입" Style="{StaticResource ChannelMetricLabelText}"/></Border>
 
-                    <DataGridTextColumn Header="TSP-표준" Binding="{Binding Tsp.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TSP-측정" Binding="{Binding Tsp.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TSP-점검" Binding="{Binding Tsp.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="TSP-최소" Binding="{Binding Tsp.Minimum, StringFormat=F1}" Width="70"/>
+<!-- 1단: 주파수/전압 그룹 병합 -->
+<Border Grid.Row="0" Grid.Column="8" Grid.ColumnSpan="12" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="주파수" Style="{StaticResource ChannelGroupLabelText}"/></Border>
+<Border Grid.Row="0" Grid.Column="20" Grid.ColumnSpan="12" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="전압" Style="{StaticResource ChannelGroupLabelText}"/></Border>
 
-                    <DataGridTextColumn Header="THZ-표준" Binding="{Binding Thz.Standard, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="THZ-측정" Binding="{Binding Thz.Measured, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="THZ-점검" Binding="{Binding Thz.Checked, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="THZ-최소" Binding="{Binding Thz.Minimum, StringFormat=F2}" Width="70"/>
+<!-- 2단: 채널명 병합 (4컬럼씩) -->
+<Border Grid.Row="1" Grid.Column="8" Grid.ColumnSpan="4" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="궤도 주파수" Style="{StaticResource ChannelNameLabelText}"/></Border>
+<Border Grid.Row="1" Grid.Column="12" Grid.ColumnSpan="4" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="차상 주파수" Style="{StaticResource ChannelNameLabelText}"/></Border>
+<Border Grid.Row="1" Grid.Column="16" Grid.ColumnSpan="4" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="지상 주파수" Style="{StaticResource ChannelNameLabelText}"/></Border>
+<Border Grid.Row="1" Grid.Column="20" Grid.ColumnSpan="4" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="송신 전압" Style="{StaticResource ChannelNameLabelText}"/></Border>
+<Border Grid.Row="1" Grid.Column="24" Grid.ColumnSpan="4" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="수신 A 전압" Style="{StaticResource ChannelNameLabelText}"/></Border>
+<Border Grid.Row="1" Grid.Column="28" Grid.ColumnSpan="4" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="수신 B 전압" Style="{StaticResource ChannelNameLabelText}"/></Border>
 
-                    <DataGridTextColumn Header="TA-표준" Binding="{Binding Ta.Standard, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="TA-측정" Binding="{Binding Ta.Measured, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="TA-점검" Binding="{Binding Ta.Checked, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="TA-최소" Binding="{Binding Ta.Minimum, StringFormat=F2}" Width="70"/>
+<!-- 3단: 표준/측정/점검/최소 개별 컬럼 -->
+<Border Grid.Row="2" Grid.Column="8" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="표준" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="9" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="측정" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="10" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="점검" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="11" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="최소" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="12" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="표준" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="13" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="측정" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="14" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="점검" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="15" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="최소" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="16" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="표준" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="17" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="측정" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="18" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="점검" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="19" Style="{StaticResource TxGroupHeaderCell}"><TextBlock Text="최소" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="20" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="표준" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="21" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="측정" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="22" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="점검" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="23" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="최소" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="24" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="표준" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="25" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="측정" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="26" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="점검" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="27" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="최소" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="28" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="표준" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="29" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="측정" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="30" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="점검" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+<Border Grid.Row="2" Grid.Column="31" Style="{StaticResource RxGroupHeaderCell}"><TextBlock Text="최소" Style="{StaticResource ChannelMetricLabelText}"/></Border>
+                    </Grid>
+                </ScrollViewer>
 
-                    <DataGridTextColumn Header="RFP-표준" Binding="{Binding Rfp.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RFP-측정" Binding="{Binding Rfp.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RFP-점검" Binding="{Binding Rfp.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RFP-최소" Binding="{Binding Rfp.Minimum, StringFormat=F1}" Width="70"/>
+                <DataGrid Grid.Row="1" x:Name="MainGrid" ItemsSource="{Binding Results}" BorderThickness="0" HeadersVisibility="None"
+                              CanUserResizeColumns="False"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ScrollViewer.ScrollChanged="MainGrid_ScrollChanged"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              EnableRowVirtualization="True" EnableColumnVirtualization="True">
+                        <DataGrid.Columns>
+<DataGridTextColumn Binding="{Binding TrackName}" Width="90"/>
+<DataGridTextColumn Binding="{Binding Date}" Width="90"/>
+<DataGridTextColumn Binding="{Binding OccurredAt}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RecoveredAt}" Width="80"/>
+<DataGridTextColumn Binding="{Binding FaultType}" Width="90"/>
+<DataGridTextColumn Binding="{Binding Imp}" Width="60"/>
+<DataGridTextColumn Binding="{Binding Af}" Width="60"/>
+<DataGridTextColumn Binding="{Binding TrackType}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Standard, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Measured, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Checked, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Minimum, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Standard, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Measured, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Checked, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Minimum, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CODE_FREQ.Standard, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CODE_FREQ.Measured, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CODE_FREQ.Checked, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding CODE_FREQ.Minimum, StringFormat=F2}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TX_VOLTAGE.Standard, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TX_VOLTAGE.Measured, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TX_VOLTAGE.Checked, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding TX_VOLTAGE.Minimum, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Standard, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Measured, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Checked, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Minimum, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Standard, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Measured, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Checked, StringFormat=F1}" Width="70"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Minimum, StringFormat=F1}" Width="70"/>
+                        </DataGrid.Columns>
+                </DataGrid>
 
-                    <DataGridTextColumn Header="RSP-표준" Binding="{Binding Rsp.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RSP-측정" Binding="{Binding Rsp.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RSP-점검" Binding="{Binding Rsp.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RSP-최소" Binding="{Binding Rsp.Minimum, StringFormat=F1}" Width="70"/>
-
-                    <DataGridTextColumn Header="RHZ-표준" Binding="{Binding Rhz.Standard, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="RHZ-측정" Binding="{Binding Rhz.Measured, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="RHZ-점검" Binding="{Binding Rhz.Checked, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="RHZ-최소" Binding="{Binding Rhz.Minimum, StringFormat=F2}" Width="70"/>
-
-                    <DataGridTextColumn Header="RA-표준" Binding="{Binding Ra.Standard, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="RA-측정" Binding="{Binding Ra.Measured, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="RA-점검" Binding="{Binding Ra.Checked, StringFormat=F2}" Width="70"/>
-                    <DataGridTextColumn Header="RA-최소" Binding="{Binding Ra.Minimum, StringFormat=F2}" Width="70"/>
-
-                    <DataGridTextColumn Header="RV1-표준" Binding="{Binding Rv1.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RV1-측정" Binding="{Binding Rv1.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RV1-점검" Binding="{Binding Rv1.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RV1-최소" Binding="{Binding Rv1.Minimum, StringFormat=F1}" Width="70"/>
-
-                    <DataGridTextColumn Header="RV2-표준" Binding="{Binding Rv2.Standard, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RV2-측정" Binding="{Binding Rv2.Measured, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RV2-점검" Binding="{Binding Rv2.Checked, StringFormat=F1}" Width="70"/>
-                    <DataGridTextColumn Header="RV2-최소" Binding="{Binding Rv2.Minimum, StringFormat=F1}" Width="70"/>
-                </DataGrid.Columns>
-            </DataGrid>
+                <TextBlock Grid.Row="1" Style="{StaticResource EmptyStateText}" Text="조회 결과가 없습니다.&#x0a;기간과 조건을 선택한 뒤 [조회]를 눌러주세요."
+                           Visibility="{Binding Results.Count, Converter={StaticResource ZeroToVisibilityConverter}}"/>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

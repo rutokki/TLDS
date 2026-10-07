@@ -4,3 +4,9 @@ obj/
 *.user
 *.suo
 publish/
+.claude/settings.local.json
+
+# 배포 산출물(단일 exe + 압축본) / 현장 실측 데이터 덤프 — 저장소에 넣지 않음
+TLDSDashBoard/publish-onefile/
+TLDSDashBoard/_file_log/
+TLDSDashBoard/_file_db/

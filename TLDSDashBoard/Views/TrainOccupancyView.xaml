@@ -47,14 +47,18 @@
         </Border>
 
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0">
-            <DataGrid ItemsSource="{Binding Results}" BorderThickness="0">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="궤도명칭" Binding="{Binding TrackName}" Width="140"/>
-                    <DataGridTextColumn Header="열차 진입 시간" Binding="{Binding EntryTime}" Width="180"/>
-                    <DataGridTextColumn Header="열차 통과 시간" Binding="{Binding PassTime}" Width="180"/>
-                    <DataGridTextColumn Header="열차 점유 시간" Binding="{Binding OccupancyTime}" Width="*"/>
-                </DataGrid.Columns>
-            </DataGrid>
+            <Grid>
+                <DataGrid ItemsSource="{Binding Results}" BorderThickness="0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="궤도명칭" Binding="{Binding TrackName}" Width="*"/>
+                        <DataGridTextColumn Header="열차 진입 시간" Binding="{Binding EntryTime}" Width="*"/>
+                        <DataGridTextColumn Header="열차 통과 시간" Binding="{Binding PassTime}" Width="*"/>
+                        <DataGridTextColumn Header="열차 점유 시간" Binding="{Binding OccupancyTime}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock Style="{StaticResource EmptyStateText}" Text="조회 결과가 없습니다.&#x0a;기간과 역/궤도를 선택한 뒤 [조회]를 눌러주세요."
+                           Visibility="{Binding Results.Count, Converter={StaticResource ZeroToVisibilityConverter}}"/>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

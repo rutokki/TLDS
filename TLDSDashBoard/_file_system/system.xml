@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+
+<!-- 
+    system : 0 기계실 
+	system : 1 사업소
+	
+	af type : 1 혁신
+	af type : 2 신우
+	af type : 3 바이네트
+	
+	ei type : 1 유경
+	ei type : 2 대아
+-->
+
+<system>
+	<main title = "쌍룡_기계실" system="0" />
+	<default>
+		<section number="1"     />
+		<sehwa   st_no="1"      />
+		<window  type="0"       />
+		<setting level="false"  />
+		<replay  record="true"  /> 
+		<af		 type="2"	    /> 
+		<ei		 type="1"	    /> 
+	</default>	
+	<menu name="화면 선택">
+		<default menu="0" />
+		<section name="쌍룡" map="쌍룡.pic" list="true" />
+	</menu>
+	<connect>
+		<seh> 
+			<!--match name="im"  local_ip="192.168.58.172" local_port="9101" remote_ip ="192.168.58.171" remote_port="9171"/--> 
+			<!--match name="af"  local_ip="192.168.58.172" local_port="9102" remote_ip ="192.168.58.171" remote_port="9172"/--> 
+			<!--match name="di"  local_ip="192.168.58.172" local_port="9103" remote_ip ="192.168.58.171" remote_port="9173"/--> 
+			<match name="im"  local_ip="127.0.0.1" local_port="9101" remote_ip ="127.0.0.1" remote_port="9171"/> 
+			<match name="af"  local_ip="127.0.0.1" local_port="9102" remote_ip ="127.0.0.1" remote_port="9172"/> 
+			<match name="di"  local_ip="127.0.0.1" local_port="9103" remote_ip ="127.0.0.1" remote_port="9173"/>
+		</seh>
+		<bsm>  
+		</bsm>
+	</connect>
+	<section>
+		<station_no>
+			<match number="1" name="쌍룡" />
+		</station_no>
+	</section>
+	
+	<time>
+		<t01> 5 </t01> <!-- 부정점유    -->
+		<t02> 5 </t02> <!-- 전압값 점검 -->
+		<t03> 5 </t03> <!-- LMR고장     -->
+		<t04> 5 </t04> <!-- 모듈고장    -->
+		<t05> 5 </t05> <!-- 퓨즈고장    -->
+		<t06> 5 </t06> <!-- -->
+		<t07> 5 </t07> <!-- -->
+		<t08> 5 </t08> <!-- -->
+		<t09> 5 </t09> <!-- -->
+		<t10> 5 </t10> <!-- -->
+		<t11> 5 </t11> <!-- -->
+		<t12> 5 </t12> <!-- -->
+		<t13> 5 </t13> <!-- -->
+		<t14> 0 </t14> <!-- 0 -->
+	</time> 
+
+</system> 

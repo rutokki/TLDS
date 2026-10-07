@@ -10,26 +10,75 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
 
-            <!-- Filter bar: 기간 + 장치(궤도) 선택 -->
+            <!-- 장치 선택: 콤보에서 고르는 즉시 GraphSearch가 자동 실행되어 아래 차트가 바로 갱신됨
+                 (미리보기 방식 — 별도 조회 버튼 없음). 실제 DB는 장치 구분 없는 단일 텔레메트리 테이블이라
+                 지금은 목데이터 시드 전환용이지만, 실 스키마에 장치 컬럼이 생기면 그대로 재사용 가능.
+                 Export 버튼은 원래 전역 상단바에 있었으나, 내보내는 내용이 이 페이지의 주파수/전압 창(또는 드릴인
+                 채널)이라 장치 선택 옆으로 옮김(원래 위치는 TopbarView.xaml 주석 참고). -->
             <Border Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,20">
-                <WrapPanel Orientation="Horizontal">
-                    <TextBlock Text="기간" Style="{StaticResource FilterLabel}"/>
-                    <views:DateRangeFilterView Filter="{Binding GraphRange}" Margin="0,0,20,6"/>
+                <DockPanel LastChildFill="False">
+                    <WrapPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                        <TextBlock Text="장치" Style="{StaticResource FilterLabel}"/>
+                        <ComboBox ItemsSource="{Binding AvailableTracks}" SelectedItem="{Binding SelectedTrack}"
+                                  ItemTemplate="{StaticResource NameItemTemplate}"/>
+                        <!-- Rack wiring of the selected device, from rack_{역}.xml (via system.xml → StationConfigLoader). -->
+                        <TextBlock Text="{Binding SelectedTrack.RackLabel}" Style="{StaticResource HintText}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    </WrapPanel>
 
-                    <TextBlock Text="장치" Style="{StaticResource FilterLabel}"/>
-                    <ComboBox ItemsSource="{Binding AvailableTracks}" SelectedItem="{Binding SelectedTrack}"
-                              ItemTemplate="{StaticResource NameItemTemplate}" Margin="0,0,20,6"/>
+                    <Grid DockPanel.Dock="Right">
+                        <Button x:Name="ExportButton" Command="{Binding ToggleExportCommand}" Cursor="Hand"
+                                Background="{StaticResource ExportBtnBgBrush}" BorderBrush="{StaticResource ExportBtnBorderBrush}"
+                                BorderThickness="1" Foreground="{StaticResource ExportBtnTextBrush}" FontSize="12.5" Padding="12,7">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Export" Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}"/>
+                                            <TextBlock Text="▾" Foreground="{TemplateBinding Foreground}" FontSize="9" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
 
-                    <Button Style="{StaticResource FilterActionButton}" Command="{Binding GraphSearchCommand}" Margin="0,0,0,6">
-                        <TextBlock Text="조회"/>
-                    </Button>
-                </WrapPanel>
+                        <Popup PlacementTarget="{Binding ElementName=ExportButton}" Placement="Bottom" VerticalOffset="6"
+                               IsOpen="{Binding ExportOpen, Mode=OneWay}" StaysOpen="True" AllowsTransparency="True">
+                            <Border Background="{StaticResource PanelBgBrush}" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1"
+                                    CornerRadius="8" Padding="6" MinWidth="150">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="28" ShadowDepth="6" Direction="270"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <Button Style="{StaticResource FlatButton}" Command="{Binding ExportPngCommand}"
+                                            HorizontalContentAlignment="Left" Padding="10,8">
+                                        <TextBlock Text="Export as PNG" FontSize="12.5"/>
+                                    </Button>
+                                    <Button Style="{StaticResource FlatButton}" Command="{Binding ExportCsvCommand}"
+                                            HorizontalContentAlignment="Left" Padding="10,8">
+                                        <TextBlock Text="Export as CSV" FontSize="12.5"/>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </DockPanel>
             </Border>
 
-            <views:MetricGroupView Data="{Binding TxChart}" Margin="0,20,0,0"/>
-            <views:MetricGroupView Data="{Binding RxChart}" Margin="0,20,0,0"/>
+            <!-- Empty state: no real _file_log rows for [now − 10분, now] (e.g. TLDS.exe not running). The
+                 reason (incl. which hour file was looked for) comes from MainViewModel.ChannelDataEmptyMessage. -->
+            <Border Style="{StaticResource Card}" Padding="24,48"
+                    Visibility="{Binding ChannelDataEmptyMessage, Converter={StaticResource NullToVisibilityConverter}}">
+                <TextBlock Style="{StaticResource EmptyStateText}" Text="{Binding ChannelDataEmptyMessage}" TextWrapping="Wrap"/>
+            </Border>
 
-            <!-- Alarms scoped to the SAME 10-minute window as the charts above, not an unrelated fixed log. -->
+            <views:MetricGroupView Data="{Binding FrequencyChart}" Margin="0,0,0,0"
+                                  Visibility="{Binding FrequencyChart, Converter={StaticResource NullToVisibilityConverter}}"/>
+            <views:MetricGroupView Data="{Binding VoltageChart}" Margin="0,20,0,0"
+                                  Visibility="{Binding VoltageChart, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+            <!-- 시스템 전체 알람 — 위 차트에서 선택된 장치와 무관하게 모든 장치의 알람을 보여줌
+                 (BuildAlarmData가 60초마다 독립적으로 갱신, 장치 선택 변경으로는 재계산 안 됨). -->
             <Border Style="{StaticResource Card}" Margin="0,20,0,0">
                 <StackPanel>
                     <TextBlock Text="최근 10분 알람" Style="{StaticResource SectionTitle}" Padding="18,14"/>
@@ -42,10 +91,10 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="90"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Time" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Grid.Column="1" Text="Channel" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Grid.Column="2" Text="Message" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Grid.Column="3" Text="Severity" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="0" Text="시간" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="1" Text="장치명" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="2" Text="내용" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="3" Text="심각도" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </Grid>
 
                     <ItemsControl ItemsSource="{Binding RecentAlarms}">
@@ -61,7 +110,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="{Binding Time}" FontFamily="{StaticResource MonoFont}"
                                                    FontSize="12.5" Foreground="#FFA6ACB6"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Channel}" FontSize="12.5"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding DeviceName}" FontFamily="{StaticResource MonoFont}" FontSize="12.5"/>
                                         <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="12.5"
                                                    Foreground="#FFD9DBDD" TextTrimming="CharacterEllipsis"/>
                                         <Border Grid.Column="3" HorizontalAlignment="Left" CornerRadius="6" Padding="9,3"
@@ -74,6 +123,8 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <TextBlock Style="{StaticResource EmptyStateText}" Text="{Binding AlarmEmptyMessage}" Margin="0,18"
+                               Visibility="{Binding AlarmEmptyMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
                 </StackPanel>
             </Border>
 

@@ -13,8 +13,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Reads the TX/RX telemetry history from a local SQLite file — see Services/SqliteChannelDataRepository.cs. -->
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+    <!-- Reads the TX/RX telemetry history from a local SQLite file — see Services/RealTelemetryRepository.cs. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Real field-install data dumps (see Services/TldsDataPaths.cs) — copied next to the exe so the
+         app finds them at the same relative location a real install would. -->
+    <Content Include="_file_db\**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="_file_log\**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="_file_system\**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="_file_pics\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

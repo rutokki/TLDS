@@ -24,6 +24,8 @@
     <!-- ============ Status colors ============ -->
     <SolidColorBrush x:Key="CriticalBrush" Color="#FFD75B4A"/>
     <SolidColorBrush x:Key="SuccessBrush" Color="#FF3FBE8A"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#FFE3AE4E"/>
+    <SolidColorBrush x:Key="SuccessBgBrush" Color="#2E3FBE8A"/>
 
     <SolidColorBrush x:Key="CriticalTextBrush" Color="#FFE8836E"/>
     <SolidColorBrush x:Key="WarningTextBrush" Color="#FFEFC077"/>
@@ -40,7 +42,7 @@
     <SolidColorBrush x:Key="ExportBtnBorderBrush" Color="#803D5A9E"/>
     <SolidColorBrush x:Key="ExportBtnTextBrush" Color="#FFA8BCE8"/>
 
-    <!-- 점검/최소 reference-line overlays on the TX/RX graphs — bright/saturated on purpose so they read
+    <!-- 점검/최소 reference-line overlays on the 주파수/전압 graphs — bright/saturated on purpose so they read
          clearly as reference lines against the dark background, distinct from the softer status colors above. -->
     <SolidColorBrush x:Key="CheckedLineBrush" Color="#FFFFD740"/>
     <SolidColorBrush x:Key="MinimumLineBrush" Color="#FFFF5252"/>

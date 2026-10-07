@@ -67,9 +67,9 @@
 
             <!-- Logo block -->
             <StackPanel Grid.Row="0">
-                <TextBlock Text="항목" FontFamily="{StaticResource MonoFont}" FontSize="15" FontWeight="Bold"
+                <TextBlock Text="TLDS" FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="Bold"
                            Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="검색 모니터링 시스템" FontSize="11" Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
+                <TextBlock Text="궤도회로 모니터링 시스템" FontSize="11" Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
             </StackPanel>
 
             <!-- Nav list -->
@@ -86,10 +86,23 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- Footer: system status -->
-            <Border Grid.Row="3" BorderBrush="{StaticResource BorderBrush1}" BorderThickness="0,1,0,0" Padding="0,16,0,0">
+            <!-- Footer: data-link status — green "실데이터 연동" when OverView could read the real _file_log,
+                 amber "샘플 데이터" when it fell back to generated data (used to be a hardcoded green
+                 "System Nominal" that stayed green even while showing sample data). -->
+            <Border Grid.Row="3" BorderBrush="{StaticResource BorderBrush1}" BorderThickness="0,1,0,0" Padding="0,16,0,0"
+                    ToolTip="{Binding DataSourceDetail}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource WarningBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRealData}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Ellipse.Loaded">
                                 <BeginStoryboard>
@@ -106,7 +119,18 @@
                             </EventTrigger>
                         </Ellipse.Triggers>
                     </Ellipse>
-                    <TextBlock Text="System Nominal" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="8,0,0,0"/>
+                    <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="8,0,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Text" Value="실데이터 없음 (최근 10분)"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRealData}" Value="True">
+                                        <Setter Property="Text" Value="실데이터 연동"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
         </Grid>

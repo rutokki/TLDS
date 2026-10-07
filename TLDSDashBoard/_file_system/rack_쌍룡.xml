@@ -1,0 +1,127 @@
+<?xml version="1.0" ?>
+<System>
+    <Rack>
+        <sub type="impulse" name ="임펄스랙1번" rack_no="1" ip="127.0.0.1" port="4001" ts_pos="1">
+		<!--sub type="impulse" name ="임펄스랙1번" rack_no="1" ip="192.168.127.1" port="4001" ts_pos="1"-->
+			<card slot="1" name="impulse_in">
+                <track name="B218DT" id="1" />  
+            </card> 
+			<card slot="2" name="impulse_in">
+                <track name="XT" id="2" />  
+            </card> 
+			<card slot="3" name="impulse_in">
+                <track name="21AT" id="3" />   
+            </card> 
+			<card slot="4" name="impulse_in">
+                <track name="21BT" id="4" />    
+            </card> 
+			<card slot="5" name="impulse_in">
+                <track name="22T" id="5" />     
+            </card> 
+			<card slot="6" name="impulse_in">
+                <track name="24T" id="6" />    
+            </card> 
+			<card slot="7" name="impulse_in">
+                <track name="23BT" id="7" />    
+            </card> 
+			<card slot="8" name="impulse_in">
+                <track name="23AT" id="8" />    
+            </card> 
+        </sub>
+		
+		<sub type="impulse" name ="임펄스랙2번" rack_no="2" ip="127.0.0.1" port="4002" ts_pos="2">
+		<!--sub type="impulse" name ="임펄스랙2번" rack_no="2" ip="192.168.127.1" port="4002" ts_pos="2"-->
+			<card slot="1" name="impulse_in">
+                <track name="24BT" id="9" />    
+            </card> 
+			<card slot="2" name="impulse_in">
+                <track name="25T" id="10" />  
+            </card> 
+            <card slot="3" name="impulse_in">
+                <track name="26T" id="11" />    
+            </card> 
+			<card slot="4" name="impulse_in">
+                <track name="27T" id="12" />  
+            </card> 
+			<card slot="5" name="impulse_in">
+                <track name="28T" id="13" />  
+            </card> 
+			<card slot="6" name="impulse_in">
+                <track name="6T" id="14" />  
+            </card> 
+			<card slot="7" name="impulse_in">
+                <track name="7T" id="15" />  
+            </card>
+			<card slot="8" name="impulse_in">
+                <track name="8T" id="16" />  
+            </card>
+        </sub>
+		
+		<sub type="impulse" name ="임펄스랙3번" rack_no="3" ip="127.0.0.1" port="4003" ts_pos="3">
+		<!--sub type="impulse" name ="임펄스랙3번" rack_no="3" ip="192.168.127.1" port="4003" ts_pos="3"-->
+            <card slot="1" name="impulse_in">
+                <track name="3T" id="17" />  
+            </card> 
+			<card slot="2" name="impulse_in">
+                <track name="4T" id="18" />  
+            </card> 
+			<card slot="3" name="impulse_in">
+                <track name="5T" id="19" />  
+            </card> 
+			<card slot="4" name="impulse_in">
+                <track name="9T" id="20" />  
+            </card> 
+			<card slot="5" name="impulse_in">
+                <track name="YT" id="21" />  
+            </card>
+			<card slot="6" name="impulse_in">
+                <track name="51AT" id="22" />  
+            </card> 
+			<card slot="7" name="impulse_in">
+                <track name="51BT" id="23" />  
+            </card>
+			<card slot="8" name="impulse_in">
+                <track name="203T" id="24" />  
+            </card>
+        </sub> 
+		
+		<sub type="impulse" name ="임펄스랙4번" rack_no="4" ip="127.0.0.1" port="4004" ts_pos="4">
+		<!--sub type="impulse" name ="임펄스랙4번" rack_no="4" ip="192.168.127.1" port="4004" ts_pos="4"-->
+            <card slot="1" name="impulse_in">
+                <track name="B219AT" id="25" />  
+            </card> 
+			<card slot="2" name="impulse_in">
+                <track name="104T" id="26" />  
+            </card> 
+			<card slot="3" name="impulse_in">
+                <track name="54T" id="27" />  
+            </card> 
+			<card slot="4" name="impulse_in">
+                <track name="55T" id="28" />  
+            </card> 
+			<card slot="5" name="impulse_in">
+                <track name="56T" id="29" />  
+            </card>
+			<card slot="6" name="impulse_in">
+                <track name="57T" id="30" />  
+            </card> 
+			<card slot="7" name="impulse_in">
+                <track name="GT" id="31" />  
+            </card>
+			<card slot="8" name="impulse_in">
+                <track name="205T" id="32" />  
+            </card>
+        </sub> 
+		  
+		<sub type="eis" sub_type="유경" name ="연동장치" rack_no="1" ip="127.0.0.1" port="4104" ts_pos="21">
+		<!--sub type="eis" sub_type="유경" name ="연동장치" rack_no="1" ip="192.168.127.2" port="4001" ts_pos="21"--> 
+			<card type="1" name="EIS">
+			</card>
+		</sub>
+		
+		<!--sub type="di" sub_type="---" name ="DI카드1번" rack_no="1" ip="192.168.127.1" port="4017" ts_pos="31"--> 
+		<sub type="di" sub_type="---" name ="DI카드1번" rack_no="1" ip="127.0.0.1" port="4201" ts_pos="31">
+		</sub>
+
+    </Rack>
+</System>

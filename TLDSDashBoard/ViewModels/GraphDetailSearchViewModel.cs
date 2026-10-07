@@ -7,7 +7,7 @@ using TLDSDashBoard.ViewModels.Items;
 namespace TLDSDashBoard.ViewModels;
 
 /// <summary>
-/// 그래프 상세검색: all 12 TX/RX channels shown as 12 separate stacked lanes (same visual pattern as
+/// 그래프 상세검색: all 6 channels shown as separate stacked lanes (same visual pattern as
 /// MetricGroupView on the Overview page — one full-width row per channel, each with its own real
 /// value axis, since units V/A/Hz/ms don't share a scale), NOT overlaid on one shared chart and NOT
 /// as a grid of small cards — both were tried and rejected in favor of this stacked layout. All 12
@@ -17,12 +17,20 @@ namespace TLDSDashBoard.ViewModels;
 /// </summary>
 public sealed class GraphDetailSearchViewModel : ViewModelBase
 {
-    private const int FullRangeSampleCount = 3600; // 1 hour at the 1-second sampling interval — the default 가로 시간 간격
+    // Rebuilding a ~3600-point WPF Path string for all 12 lanes on every single mouse-move tick during
+    // drag/zoom (Recompute runs on every Pan call) was the source of the reported lag — the chart area is
+    // only a few hundred pixels wide, so points beyond this are visually indistinguishable anyway.
+    private const int MaxRenderPoints = 400;
 
     private readonly Dictionary<string, double[]> _channelData = new();
     private DateTime[] _fullTimestamps = Array.Empty<DateTime>();
     private int _windowStart;
     private int _windowLength;
+    /// <summary>Real per-channel 점검(Caution)/최소(Warning) thresholds for the selected device, loaded
+    /// once per Search() — index matches ChannelCatalog.ChannelIds order (TRK_FREQ..RX_B_VOLTAGE), same convention as
+    /// MainViewModel.BuildStaticData. Null when SetValue.db has no row for this device, in which case
+    /// Recompute() falls back to a data-derived placeholder instead (see PathBuilder.ComputeReferenceLines).</summary>
+    private IReadOnlyList<ChannelThreshold>? _thresholds;
 
     public ObservableCollection<TrackCircuit> AvailableTracks { get; } = new(ReferenceData.Tracks);
     public DateRangeFilter Range { get; } = new();
@@ -30,7 +38,7 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
     private TrackCircuit _selectedTrack;
     public TrackCircuit SelectedTrack { get => _selectedTrack; set => SetProperty(ref _selectedTrack, value); }
 
-    /// <summary>The 12 stacked lanes, one per TX/RX channel — built once per Search(), then mutated in place by Recompute() on zoom/pan/hover.</summary>
+    /// <summary>The stacked lanes, one per channel — built once per Search(), then mutated in place by Recompute() on zoom/pan/hover.</summary>
     public ObservableCollection<ChannelSeriesVM> Series { get; } = new();
 
     /// <summary>Real (start/mid/end) timestamps of the displayed window — same 3-label layout as MetricGroupView's time axis.</summary>
@@ -53,60 +61,163 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
     private string _statusMessage = string.Empty;
     public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
 
+    // ---- lane sizing (fit-one-screen by default, 세로 확대 grows it) ----
+
+    /// <summary>Unzoomed per-lane height in pixels — set by the View from its ScrollViewer's actual
+    /// viewport height (viewport / 12), so all 12 lanes fit on screen with no scrolling at LaneHeightScale
+    /// == 1. See GraphDetailSearchView.LanesScroll_SizeChanged.</summary>
+    private double _baseLaneHeight = 54;
+    private double _laneHeightScale = 1.0;
+
+    /// <summary>The actual per-lane pixel height bound by both the label column and the chart column so
+    /// their rows stay aligned. Recomputed whenever the base height or the zoom scale changes.</summary>
+    public double LaneHeight => _baseLaneHeight * _laneHeightScale;
+
+    public void SetBaseLaneHeight(double pixels)
+    {
+        // Subtract a hair so that summing 12 independently pixel-rounded Border heights back up can never
+        // overshoot the viewport by a pixel — that overshoot was tripping the "Auto" vertical scrollbar
+        // even at the unzoomed fit-one-screen size, which stole a few px of width from the Viewbox-
+        // stretched charts and visibly resized them (see also HasVerticalOverflow below).
+        pixels = Math.Max(0, pixels - 0.5);
+        if (pixels <= 0 || double.IsNaN(pixels) || Math.Abs(pixels - _baseLaneHeight) < 0.5) return;
+        _baseLaneHeight = pixels;
+        OnPropertyChanged(nameof(LaneHeight));
+    }
+
+    /// <summary>Multiplies LaneHeightScale by <paramref name="factor"/>, clamped to [1, 6] — 1 is the
+    /// "fits one screen" size, higher values intentionally overflow the ScrollViewer's viewport so the
+    /// user can scroll through enlarged lanes.</summary>
+    public void AdjustLaneZoom(double factor)
+    {
+        double next = Math.Clamp(_laneHeightScale * factor, 1.0, 6.0);
+        if (Math.Abs(next - _laneHeightScale) < 0.001) return;
+        _laneHeightScale = next;
+        OnPropertyChanged(nameof(LaneHeight));
+        OnPropertyChanged(nameof(HasVerticalOverflow));
+    }
+
+    public void ResetLaneZoom()
+    {
+        if (_laneHeightScale == 1.0) return;
+        _laneHeightScale = 1.0;
+        OnPropertyChanged(nameof(LaneHeight));
+        OnPropertyChanged(nameof(HasVerticalOverflow));
+    }
+
+    /// <summary>True once 세로 확대 has actually made the lanes taller than the fit-one-screen baseline.
+    /// The lanes ScrollViewer's vertical scrollbar visibility is bound to this (not to
+    /// <see cref="IsVerticalZoomMode"/>, which is just which mode the mouse wheel is in) so the scrollbar
+    /// — and the width it steals from the charts — only ever appears once there's really something to
+    /// scroll, never as a rounding artifact at the default size.</summary>
+    public bool HasVerticalOverflow => _laneHeightScale > 1.0;
+
+    private bool _isVerticalZoomMode;
+    /// <summary>When on, the chart area's mouse wheel resizes lanes (AdjustLaneZoom) instead of doing the
+    /// usual horizontal time zoom — see GraphDetailSearchView.ChartArea_MouseWheel.</summary>
+    public bool IsVerticalZoomMode { get => _isVerticalZoomMode; set => SetProperty(ref _isVerticalZoomMode, value); }
+
+    private bool _showMeasuredLine = true;
+    /// <summary>Toggles the colored measured-data curve (Path) on every lane.</summary>
+    public bool ShowMeasuredLine { get => _showMeasuredLine; set => SetProperty(ref _showMeasuredLine, value); }
+
+    private bool _showReferenceLines = true;
+    /// <summary>Toggles the dashed 점검/최소 threshold lines (CheckedLinePath + MinimumLinePath) together
+    /// on every lane — they're always a pair around the measured value, so one switch controls both.</summary>
+    public bool ShowReferenceLines { get => _showReferenceLines; set => SetProperty(ref _showReferenceLines, value); }
+
     public RelayCommand SearchCommand { get; }
     public RelayCommand ResetZoomCommand { get; }
 
     public GraphDetailSearchViewModel()
     {
         _selectedTrack = AvailableTracks[0];
+        // Default 조회 range is the last 1 hour ending now (matches the "기본 1시간" label on this page),
+        // not a whole-day range like the other 조회 pages default to.
+        var end = DateTime.Now;
+        var start = end.AddHours(-1);
+        Range.StartDate = start.Date; Range.StartHour = start.Hour; Range.StartMinute = start.Minute;
+        Range.EndDate = end.Date; Range.EndHour = end.Hour; Range.EndMinute = end.Minute;
         SearchCommand = new RelayCommand(Search);
         ResetZoomCommand = new RelayCommand(ResetZoom);
-        Search();
+        // No auto-search on load (OverView is the only page that renders data by default) — this page
+        // starts empty until the user picks a 기간/장치 and clicks 조회.
     }
 
+    private static readonly IChannelDataRepository Repository = new RealTelemetryRepository();
+
+    /// <summary>Queries exactly the selected 기간 — no mock fallback. This page exists to inspect real
+    /// field telemetry, so if <see cref="Repository"/> has no coverage for the requested device/period the
+    /// screen shows nothing (with a status message saying so) rather than silently substituting generated
+    /// placeholder data that could be mistaken for a real reading.</summary>
     private void Search()
     {
-        // One generator instance per track (like GraphSearch in MainViewModel) so all 12 channels for the
-        // same device share one continuous random stream, instead of each looking independently re-rolled.
-        var generator = new DataGenerator(DataGenerator.SeedFrom(SelectedTrack.Id));
         _channelData.Clear();
-        DateTime[]? timestamps = null;
-        foreach (var id in DataGenerator.ChannelIds)
+        bool hasData;
+        string statusMessage;
+        try
         {
-            var (ts, values) = generator.GenerateSingleChannelSeries(id, Range.End, FullRangeSampleCount);
-            timestamps ??= ts; // identical for every channel (same end + count) — only need it once
-            _channelData[id] = values;
+            var set = Repository.LoadRange(SelectedTrack.Idx, Range.Start, Range.End);
+            _fullTimestamps = set.Timestamps;
+            _channelData["TRK_FREQ"] = set.TRK_FREQ; _channelData["CAB_FREQ"] = set.CAB_FREQ; _channelData["CODE_FREQ"] = set.CODE_FREQ;
+            _channelData["TX_VOLTAGE"] = set.TX_VOLTAGE; _channelData["RX_A_VOLTAGE"] = set.RX_A_VOLTAGE; _channelData["RX_B_VOLTAGE"] = set.RX_B_VOLTAGE;
+
+            hasData = true;
+            statusMessage = $"{SelectedTrack.Name} — 실데이터 {set.Timestamps.Length}건 조회됨 ({Range.Start:yyyy-MM-dd HH:mm}~{Range.End:yyyy-MM-dd HH:mm})";
         }
-        _fullTimestamps = timestamps ?? Array.Empty<DateTime>();
+        catch (Exception ex)
+        {
+            _fullTimestamps = Array.Empty<DateTime>();
+            hasData = false;
+            statusMessage = $"{SelectedTrack.Name} — 해당 기간의 실데이터가 없습니다 ({ex.Message})";
+        }
+
+        // Real 점검/최소 thresholds for the selected device — same source MainViewModel's lanes use, so
+        // this page's reference lines agree with OverView's instead of drawing a data-derived placeholder
+        // that can look "off" (e.g. a flat line right on top of the data) whenever the real Caution/Warning
+        // values are far from this window's own tiny fluctuation range.
+        try { _thresholds = hasData ? ThresholdRepository.LoadForDevice(SelectedTrack.Idx) : null; }
+        catch (Exception) { _thresholds = null; }
+
         _windowStart = 0;
-        _windowLength = FullRangeSampleCount;
+        _windowLength = _fullTimestamps.Length;
 
         Series.Clear();
-        foreach (var id in DataGenerator.ChannelIds)
+        if (hasData)
         {
-            string fmt = DataGenerator.ChannelUnit(id) == "Hz" ? "F2" : "F1";
-            Series.Add(new ChannelSeriesVM
+            foreach (var id in ChannelCatalog.ChannelIds)
             {
-                Id = id,
-                Name = DataGenerator.ChannelName(id),
-                Unit = DataGenerator.ChannelUnit(id),
-                ColorHex = DataGenerator.ChannelColor(id),
-                WindowValues = Array.Empty<double>(),
-                ValueFormat = fmt,
-                LatestValue = "",
-                Value = "",
-                Path = "",
-                AxisMaxLabel = "",
-                AxisMinLabel = "",
-                CheckedLinePath = "",
-                MinimumLinePath = "",
-                CheckedLabel = "",
-                MinimumLabel = "",
-            });
+                string fmt = ChannelCatalog.ChannelUnit(id) == "Hz" ? "F2" : "F1";
+                Series.Add(new ChannelSeriesVM
+                {
+                    Id = id,
+                    Name = ChannelCatalog.ChannelName(id),
+                    Unit = ChannelCatalog.ChannelUnit(id),
+                    ColorHex = ChannelCatalog.ChannelColor(id),
+                    WindowValues = Array.Empty<double>(),
+                    ValueFormat = fmt,
+                    LatestValue = "",
+                    Value = "",
+                    Path = "",
+                    AxisMaxLabel = "",
+                    AxisMinLabel = "",
+                    CheckedLinePath = "",
+                    MinimumLinePath = "",
+                    CheckedLabel = "",
+                    MinimumLabel = "",
+                });
+            }
         }
 
         Recompute();
-        StatusMessage = $"{SelectedTrack.Name} — 12개 채널 조회됨 (최근 1시간)";
+        if (!hasData)
+        {
+            // Recompute() bails out immediately on an empty window, leaving the previous search's time/range
+            // labels on screen — clear them explicitly so a no-data result reads as empty, not stale.
+            TimeStartLabel = TimeMidLabel = TimeEndLabel = RangeLabel = WindowLabel = "";
+            HoverTimeLabel = null;
+        }
+        StatusMessage = statusMessage;
     }
 
     public void ResetZoom()
@@ -177,17 +288,28 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         var tsWindow = new DateTime[_windowLength];
         Array.Copy(_fullTimestamps, _windowStart, tsWindow, 0, _windowLength);
 
-        foreach (var s in Series)
+        for (int ci = 0; ci < Series.Count; ci++)
         {
+            var s = Series[ci];
             var full = _channelData[s.Id];
             var window = new double[_windowLength];
             Array.Copy(full, _windowStart, window, 0, _windowLength);
             string fmt = s.ValueFormat;
             string latest = window.Length > 0 ? window[^1].ToString(fmt, CultureInfo.InvariantCulture) : "";
 
+            // Downsample once (min/max-per-bucket keeps the true global min/max, so ComputeReferenceLines
+            // and PathFromArray can both run against the smaller array below) instead of at full window
+            // resolution on every zoom/pan tick — see MaxRenderPoints above.
+            var renderWindow = window.Length > MaxRenderPoints ? PathBuilder.Downsample(window, MaxRenderPoints) : window;
+
             // Each lane keeps its own real axis (not normalized/overlaid) — units differ (V/A/Hz/ms) so
             // one shared scale wouldn't be meaningful. Axis is expanded to fit the 점검/최소 lines too.
-            var (checkedValue, minimumValue, axisMin, axisMax) = PathBuilder.ComputeReferenceLines(window);
+            // Real thresholds (see Search()) take priority; only fall back to the data-derived placeholder
+            // when SetValue.db has no row for this device.
+            var threshold = _thresholds is not null && ci < _thresholds.Count ? _thresholds[ci] : null;
+            var (checkedValue, minimumValue, axisMin, axisMax) = threshold is not null
+                ? PathBuilder.ComputeReferenceLines(renderWindow, threshold.Caution, threshold.Warning)
+                : PathBuilder.ComputeReferenceLines(renderWindow);
 
             s.WindowValues = window;
             s.LatestValue = latest;
@@ -196,12 +318,16 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
             s.AxisMinLabel = axisMin.ToString(fmt, CultureInfo.InvariantCulture);
             s.CheckedLabel = checkedValue.ToString(fmt, CultureInfo.InvariantCulture);
             s.MinimumLabel = minimumValue.ToString(fmt, CultureInfo.InvariantCulture);
-            s.Path = PathBuilder.PathFromArray(window, axisMin, axisMax, ChartMetrics.LaneChartW, ChartMetrics.LaneChartH, ChartMetrics.LaneChartPad, ChartMetrics.LaneChartPad);
+            s.Path = PathBuilder.PathFromArray(renderWindow, axisMin, axisMax, ChartMetrics.LaneChartW, ChartMetrics.LaneChartH, ChartMetrics.LaneChartPad, ChartMetrics.LaneChartPad);
             s.CheckedLinePath = PathBuilder.HorizontalLinePath(checkedValue, axisMin, axisMax, ChartMetrics.LaneChartW, ChartMetrics.LaneChartH, ChartMetrics.LaneChartPad, ChartMetrics.LaneChartPad);
             s.MinimumLinePath = PathBuilder.HorizontalLinePath(minimumValue, axisMin, axisMax, ChartMetrics.LaneChartW, ChartMetrics.LaneChartH, ChartMetrics.LaneChartPad, ChartMetrics.LaneChartPad);
         }
 
-        string TimeLabel(int idx) => tsWindow.Length == 0 ? "" : tsWindow[idx].ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+        string TimeLabel(int idx)
+        {
+            return tsWindow.Length == 0 ? "" : tsWindow[idx].ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+        }
+
         TimeStartLabel = tsWindow.Length > 0 ? TimeLabel(0) : "";
         TimeMidLabel = tsWindow.Length > 0 ? TimeLabel(tsWindow.Length / 2) : "";
         TimeEndLabel = tsWindow.Length > 0 ? TimeLabel(tsWindow.Length - 1) : "";

@@ -8,62 +8,140 @@
 
     <UserControl.Resources>
         <!-- Left label for one lane: color dot + name (top), current/hovered value (middle), id (bottom).
-             Same visual as MetricGroupView's lane label — kept as a separate copy here because this page's
-             lanes additionally live under a shared zoom/pan overlay instead of only a hover crosshair. -->
+             Same visual as MetricGroupView's lane label. Height comes from the bound LaneHeight (see
+             code-behind LanesScroll_SizeChanged) instead of a fixed value, so all lanes fit exactly one
+             screen by default and grow together under 세로 확대 (vertical zoom). -->
         <Style x:Key="DetailLaneLabelStyle" TargetType="Border">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush1}"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
             <Setter Property="Padding" Value="6,8"/>
-            <Setter Property="Height" Value="90"/>
+        </Style>
+
+        <!-- Small on/off chip button for the 측정/점검선/세로확대 toggles — checked state picks up the
+             theme's "info" accent so it reads clearly against the dark background. -->
+        <Style x:Key="ToggleChipButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource InfoBgBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource InfoTextBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource InfoTextBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </UserControl.Resources>
 
     <!-- DataContext is overridden here (not on the UserControl root) so a Visibility binding set from
-         outside (against MainViewModel) keeps working — see MetricGroupView for the same pattern. -->
-    <ScrollViewer DataContext="{Binding GraphDetailSearch}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel>
+         outside (against MainViewModel) keeps working — see MetricGroupView for the same pattern.
+         Root is a Grid (Auto filter row + "*" chart-card row), not a page-level ScrollViewer, so the chart
+         card genuinely fills the remaining window height and all lanes can fit one screen by default —
+         see MainWindow.xaml's comment on why pages aren't hosted inside an outer ScrollViewer. -->
+    <Grid x:Name="PageRoot" DataContext="{Binding GraphDetailSearch}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <!-- Filters (own row) + action button (own row) — see other search pages for why these are split. -->
-            <Border Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,20">
-                <StackPanel>
-                    <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="기간" Style="{StaticResource FilterLabel}"/>
-                        <views:DateRangeFilterView Filter="{Binding Range}" Margin="0,0,20,6"/>
+        <!-- Filters (own row) + action button (own row) — see other search pages for why these are split. -->
+        <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,20">
+            <StackPanel>
+                <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="기간" Style="{StaticResource FilterLabel}"/>
+                    <views:DateRangeFilterView Filter="{Binding Range}" Margin="0,0,20,6"/>
 
-                        <TextBlock Text="장치" Style="{StaticResource FilterLabel}"/>
-                        <ComboBox ItemsSource="{Binding AvailableTracks}" SelectedItem="{Binding SelectedTrack}"
-                                  ItemTemplate="{StaticResource NameItemTemplate}" Margin="0,0,0,6"/>
-                    </WrapPanel>
+                    <TextBlock Text="장치" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding AvailableTracks}" SelectedItem="{Binding SelectedTrack}"
+                              ItemTemplate="{StaticResource NameItemTemplate}" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding SelectedTrack.RackLabel}" Style="{StaticResource HintText}" VerticalAlignment="Center" Margin="10,0,0,6"/>
+                </WrapPanel>
 
-                    <WrapPanel Orientation="Horizontal">
-                        <Button Style="{StaticResource FilterActionButton}" Command="{Binding SearchCommand}" Margin="0,0,8,0">
-                            <TextBlock Text="조회"/>
+                <WrapPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource FilterActionButton}" Command="{Binding SearchCommand}" Margin="0,0,8,0">
+                        <TextBlock Text="조회"/>
+                    </Button>
+                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource HintText}" VerticalAlignment="Center"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
+                    <TextBlock DockPanel.Dock="Left" Text="채널 상세 (주파수 3 · 전압 3, 기본 1시간)" Style="{StaticResource SectionTitle}"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <!-- Reset buttons live up here (not at the bottom of the card) because the mouse-
+                             following tooltip Popup constantly covered them down there whenever the cursor
+                             was anywhere near the bottom of the lanes — up here it's clear of the chart area. -->
+                        <Button Style="{StaticResource FilterActionButton}" Command="{Binding ResetZoomCommand}" Margin="0,0,6,0">
+                            <TextBlock Text="가로 줌 초기화"/>
                         </Button>
-                        <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource HintText}" VerticalAlignment="Center"/>
-                    </WrapPanel>
+                        <Button Style="{StaticResource FilterActionButton}" Click="ResetLaneZoomButton_Click" Margin="0,0,14,0">
+                            <TextBlock Text="세로 줌 초기화"/>
+                        </Button>
+
+                        <ToggleButton Style="{StaticResource ToggleChipButton}" IsChecked="{Binding ShowMeasuredLine}">
+                            <TextBlock Text="측정선"/>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource ToggleChipButton}" IsChecked="{Binding ShowReferenceLines}">
+                            <TextBlock Text="점검 및 기준선 표시"/>
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource ToggleChipButton}" IsChecked="{Binding IsVerticalZoomMode}" Margin="0,0,14,0">
+                            <TextBlock Text="세로 확대"/>
+                        </ToggleButton>
+
+                        <Rectangle Width="14" Height="2" Fill="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="측정" Style="{StaticResource LegendText}"/>
+                        <Rectangle Width="14" Height="2" Fill="{StaticResource CheckedLineBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="점검" Style="{StaticResource LegendText}"/>
+                        <Rectangle Width="14" Height="2" Fill="{StaticResource MinimumLineBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="최소" Style="{StaticResource LegendText}" Margin="5,0,0,0"/>
+                    </StackPanel>
+                    <!-- Usage hint moved out of the crowded toolbar row into the bottom row (next to RangeLabel). -->
+                </DockPanel>
+
+                <!-- Empty state: this page intentionally starts blank (no auto-search, no mock fallback),
+                     so say so instead of showing an empty card. Hidden as soon as a 조회 returns lanes. -->
+                <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                            Visibility="{Binding Series.Count, Converter={StaticResource ZeroToVisibilityConverter}}">
+                    <TextBlock Style="{StaticResource EmptyStateText}" Text="기간과 장치를 선택한 뒤 [조회]를 눌러주세요."/>
+                    <TextBlock Style="{StaticResource EmptyStateText}" FontSize="11.5" Margin="0,6,0,0"
+                               Text="실측 데이터(_file_log)가 있는 구간만 표시되며, 샘플 데이터로 대체하지 않습니다."/>
                 </StackPanel>
-            </Border>
 
-            <Border Style="{StaticResource Card}" Padding="20">
-                <StackPanel>
-                    <DockPanel LastChildFill="False" Margin="0,0,0,10">
-                        <TextBlock DockPanel.Dock="Left" Text="TX/RX 채널 상세 (12개 채널, 기본 1시간)" Style="{StaticResource SectionTitle}"/>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Rectangle Width="14" Height="2" Fill="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                            <TextBlock Text="측정" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,14,0"/>
-                            <Rectangle Width="14" Height="2" Fill="{StaticResource CheckedLineBrush}" VerticalAlignment="Center"/>
-                            <TextBlock Text="점검" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,14,0"/>
-                            <Rectangle Width="14" Height="2" Fill="{StaticResource MinimumLineBrush}" VerticalAlignment="Center"/>
-                            <TextBlock Text="최소" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,14,0"/>
-                            <TextBlock Text="휠: 확대·축소 / 드래그: 이동" FontSize="11"
-                                       Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </DockPanel>
-
-                    <!-- One stacked lane per channel — each with its OWN real value axis (not normalized/overlaid,
-                         since units differ: V/A/Hz/ms). A single ChartArea overlay spans the whole stack and
-                         drives shared zoom/pan/hover across every lane at once (see code-behind). -->
+                <!-- The lanes fill this row exactly (LaneHeight = row height / channel count) with no scrolling needed
+                     by default; 세로 확대 grows LaneHeight beyond that, and this ScrollViewer is what lets
+                     the now-taller-than-viewport stack actually be scrolled to. -->
+                <ScrollViewer Grid.Row="1" x:Name="LanesScroll"
+                              VerticalScrollBarVisibility="{Binding HasVerticalOverflow, Converter={StaticResource BoolToScrollBarVisibilityConverter}}"
+                              HorizontalScrollBarVisibility="Disabled" SizeChanged="LanesScroll_SizeChanged">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="120"/>
@@ -79,12 +157,12 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource DetailLaneLabelStyle}">
+                                    <Border Style="{StaticResource DetailLaneLabelStyle}"
+                                            Height="{Binding DataContext.LaneHeight, ElementName=PageRoot}">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="*"/>
-                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <StackPanel Grid.Row="0" Orientation="Horizontal">
@@ -98,9 +176,6 @@
                                                 <Run Text="{Binding Value, Mode=OneWay}"/>
                                                 <Run Text="{Binding Unit, Mode=OneWay}" FontSize="10.5" FontWeight="Normal" Foreground="{StaticResource TextDimBrush}"/>
                                             </TextBlock>
-
-                                            <TextBlock Grid.Row="2" Text="{Binding Id}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
-                                                       Foreground="{StaticResource TextDimBrush}"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -117,25 +192,29 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Height="90" BorderBrush="{StaticResource BorderBrush1}" BorderThickness="0,0,0,1">
+                                        <Border Height="{Binding DataContext.LaneHeight, ElementName=PageRoot}"
+                                                BorderBrush="{StaticResource BorderBrush1}" BorderThickness="0,0,0,1">
                                             <Grid>
                                                 <Viewbox Stretch="Fill">
                                                     <Canvas Width="900" Height="90">
                                                         <Path Data="{Binding CheckedLinePath, Converter={StaticResource PathDataConverter}}"
-                                                              Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                                                              Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"
+                                                              Visibility="{Binding DataContext.ShowReferenceLines, ElementName=PageRoot, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                         <Path Data="{Binding MinimumLinePath, Converter={StaticResource PathDataConverter}}"
-                                                              Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                                                              Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"
+                                                              Visibility="{Binding DataContext.ShowReferenceLines, ElementName=PageRoot, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                         <Path Data="{Binding Path, Converter={StaticResource PathDataConverter}}"
                                                               Stroke="{Binding ColorHex, Converter={StaticResource HexToBrushConverter}}"
-                                                              StrokeThickness="2"/>
+                                                              StrokeThickness="2"
+                                                              Visibility="{Binding DataContext.ShowMeasuredLine, ElementName=PageRoot, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                     </Canvas>
                                                 </Viewbox>
-                                                <TextBlock Text="{Binding AxisMaxLabel}" FontSize="9" FontFamily="{StaticResource MonoFont}"
-                                                           Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"
-                                                           VerticalAlignment="Top" Margin="0,2,4,0"/>
-                                                <TextBlock Text="{Binding AxisMinLabel}" FontSize="9" FontFamily="{StaticResource MonoFont}"
-                                                           Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"
-                                                           VerticalAlignment="Bottom" Margin="0,0,4,2"/>
+                                                <Border Style="{StaticResource LaneAxisLabelBox}" VerticalAlignment="Top" Margin="0,2,4,0">
+                                                    <TextBlock Text="{Binding AxisMaxLabel}" Style="{StaticResource LaneAxisLabelText}"/>
+                                                </Border>
+                                                <Border Style="{StaticResource LaneAxisLabelBox}" VerticalAlignment="Bottom" Margin="0,0,4,2">
+                                                    <TextBlock Text="{Binding AxisMinLabel}" Style="{StaticResource LaneAxisLabelText}"/>
+                                                </Border>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -166,8 +245,8 @@
                                     <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
                                             BorderThickness="1" CornerRadius="6" Padding="10,8">
                                         <StackPanel>
-                                            <TextBlock Text="{Binding HoverTimeLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
-                                                       Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <TextBlock Text="{Binding HoverTimeLabel}" FontSize="13" FontFamily="{StaticResource MonoFont}"
+                                                       Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
                                             <ItemsControl ItemsSource="{Binding Series}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
@@ -187,36 +266,38 @@
                                         </StackPanel>
                                     </Border>
                                 </Popup>
-
-                                <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
-                                        BorderThickness="1" CornerRadius="5" Padding="6,3" Margin="6"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top" IsHitTestVisible="False">
-                                    <TextBlock Text="{Binding WindowLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
-                                               Foreground="{StaticResource TextSecondaryBrush}"/>
-                                </Border>
                             </Grid>
                         </Grid>
                     </Grid>
+                </ScrollViewer>
 
-                    <!-- Shared time axis, indented to align under the chart column -->
-                    <Grid Margin="120,4,0,0">
-                        <TextBlock Text="{Binding TimeStartLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
-                                   Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Left"/>
-                        <TextBlock Text="{Binding TimeMidLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
-                                   Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding TimeEndLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
-                                   Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
-                    </Grid>
+                <!-- Shared time axis, indented to align under the chart column -->
+                <Grid Grid.Row="2" Margin="120,4,0,0">
+                    <TextBlock Text="{Binding TimeStartLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
+                               Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding TimeMidLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
+                               Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding TimeEndLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
+                               Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
+                </Grid>
 
-                    <DockPanel LastChildFill="False" Margin="120,10,0,0">
-                        <TextBlock DockPanel.Dock="Left" Text="{Binding RangeLabel}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource FilterActionButton}" Command="{Binding ResetZoomCommand}">
-                            <TextBlock Text="줌 초기화"/>
-                        </Button>
-                    </DockPanel>
-                </StackPanel>
-            </Border>
-
-        </StackPanel>
-    </ScrollViewer>
+                <!-- Bottom row: displayed range (left) + window size chip and usage hint (right). The window
+                     chip used to float over the top-right corner of the chart, covering lane 1's max-axis label. -->
+                <DockPanel Grid.Row="3" LastChildFill="False" Margin="120,10,0,0">
+                    <TextBlock DockPanel.Dock="Left" Text="{Binding RangeLabel}" FontSize="11" Foreground="{StaticResource TextDimBrush}"
+                               VerticalAlignment="Center"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
+                                BorderThickness="1" CornerRadius="5" Padding="6,2" Margin="0,0,12,0" VerticalAlignment="Center"
+                                Visibility="{Binding WindowLabel, Converter={StaticResource NullToVisibilityConverter}}">
+                            <TextBlock Text="{Binding WindowLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Border>
+                        <TextBlock Text="휠: 확대·축소  ·  드래그: 이동  ·  [세로 확대] 켜고 휠: 레인 높이 조절" FontSize="11"
+                                   Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DockPanel>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>

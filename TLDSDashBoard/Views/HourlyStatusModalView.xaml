@@ -105,15 +105,23 @@
                             </WrapPanel>
                         </StackPanel>
 
-                        <!-- Condition checkboxes -->
+                        <!-- Condition checkboxes — per-category (SelectedGroup.ConditionOptions), not one
+                             fixed row shared by all 7 categories. Placeholder items for now; the actual
+                             per-category conditions are still TBD (see HourlyStatusViewModel.BuildConditionOptions),
+                             switching categories on the left already swaps this row to that category's set. -->
                         <StackPanel Grid.Row="1" Margin="0,0,0,12">
-                            <StackPanel Orientation="Horizontal">
-                                <CheckBox Content="부정 점유" IsChecked="{Binding ConditionInvalidOccupancy}" Margin="0,0,16,0"/>
-                                <CheckBox Content="전압 주의" IsChecked="{Binding ConditionVoltageWarning}" Margin="0,0,16,0"/>
-                                <CheckBox Content="전압 장애" IsChecked="{Binding ConditionVoltageFault}" Margin="0,0,16,0"/>
-                                <CheckBox Content="퓨즈 고장" IsChecked="{Binding ConditionFuseFault}" Margin="0,0,16,0"/>
-                                <CheckBox Content="통신 고장" IsChecked="{Binding ConditionCommFault}"/>
-                            </StackPanel>
+                            <ItemsControl ItemsSource="{Binding SelectedGroup.ConditionOptions}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" Margin="0,0,16,6"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                 <CheckBox Content="다음 시간대 제외" IsChecked="{Binding ExcludeHourRange}" Margin="0,0,10,0"/>
                                 <ComboBox ItemsSource="{Binding HourChoices}" SelectedItem="{Binding ExcludeFromHour}"
@@ -143,14 +151,25 @@
                         </TextBlock>
 
                         <Border Grid.Row="2" Style="{StaticResource Card}" Padding="0">
-                            <DataGrid ItemsSource="{Binding SelectedGroup.Rows}" BorderThickness="0">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="발생시각" Binding="{Binding OccurredAt}" Width="160"/>
-                                    <DataGridTextColumn Header="역 명칭" Binding="{Binding StationName}" Width="140"/>
-                                    <DataGridTextColumn Header="장치이름" Binding="{Binding DeviceName}" Width="140"/>
-                                    <DataGridTextColumn Header="내용" Binding="{Binding Content}" Width="*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <Grid>
+                                <DataGrid ItemsSource="{Binding SelectedGroup.Rows}" BorderThickness="0">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="발생시각" Binding="{Binding OccurredAt}" Width="160"/>
+                                        <DataGridTextColumn Header="역 명칭" Binding="{Binding StationName}" Width="140"/>
+                                        <DataGridTextColumn Header="장치이름" Binding="{Binding DeviceName}" Width="140"/>
+                                        <DataGridTextColumn Header="내용" Binding="{Binding Content}" Width="*">
+                                            <DataGridTextColumn.CellStyle>
+                                                <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                                    <Setter Property="Padding" Value="12,0"/>
+                                                </Style>
+                                            </DataGridTextColumn.CellStyle>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <TextBlock Style="{StaticResource EmptyStateText}" Text="조회 결과가 없습니다.&#x0a;검색 기간과 역을 선택한 뒤 [조회]를 눌러주세요."
+                                           Visibility="{Binding SelectedGroup.Rows.Count, Converter={StaticResource ZeroToVisibilityConverter}}"/>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Grid>

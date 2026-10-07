@@ -5,59 +5,59 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="70">
 
-    <Border BorderBrush="{StaticResource BorderBrush1}" BorderThickness="0,0,0,1" Padding="28,16">
+    <!-- Export 버튼은 OverView 페이지의 "장치" 선택 카드 옆으로 옮겨감(GraphPageView.xaml) — 이 커맨드가
+         내보내는 내용(현재 주파수/전압 창 또는 드릴인 채널) 자체가 OverView 전용이라, 다른 페이지를 보는 중에도
+         떠 있던 전역 버튼보다 그 페이지 안에 두는 게 맞음.
+         데이터 소스 배지도 같은 이유로 OverView에서만 보임 — OverView 장치의 실데이터/샘플 여부라서 다른
+         조회 페이지(각자 자기 조회 결과 상태를 상태 메시지로 따로 표시함)에 띄우면 오해를 부름. -->
+    <Border BorderBrush="{StaticResource BorderBrush1}" BorderThickness="0,0,0,1" Padding="28,14">
         <DockPanel LastChildFill="False">
-
             <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                 <TextBlock Text="{Binding ActivePageTitle}" FontSize="17" FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding ClockLabel}" FontFamily="{StaticResource MonoFont}" FontSize="12"
-                           Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
-                <TextBlock Text="{Binding DataSourceLabel}" FontSize="11"
-                           Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
+                           Foreground="{StaticResource TextDimBrush}" Margin="0,3,0,0"/>
             </StackPanel>
 
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-
-                <!-- Export -->
-                <Grid>
-                    <Button x:Name="ExportButton" Command="{Binding ToggleExportCommand}" Cursor="Hand"
-                            Background="{StaticResource ExportBtnBgBrush}" BorderBrush="{StaticResource ExportBtnBorderBrush}"
-                            BorderThickness="1" Foreground="{StaticResource ExportBtnTextBrush}" FontSize="12.5" Padding="12,7">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Export" Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}"/>
-                                        <TextBlock Text="▾" Foreground="{TemplateBinding Foreground}" FontSize="9" Margin="6,0,0,0" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-
-                    <Popup PlacementTarget="{Binding ElementName=ExportButton}" Placement="Bottom" VerticalOffset="6"
-                           IsOpen="{Binding ExportOpen, Mode=OneWay}" StaysOpen="True" AllowsTransparency="True">
-                        <Border Background="{StaticResource PanelBgBrush}" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1"
-                                CornerRadius="8" Padding="6" MinWidth="150">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="28" ShadowDepth="6" Direction="270"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <Button Style="{StaticResource FlatButton}" Command="{Binding ExportPngCommand}"
-                                        HorizontalContentAlignment="Left" Padding="10,8">
-                                    <TextBlock Text="Export as PNG" FontSize="12.5"/>
-                                </Button>
-                                <Button Style="{StaticResource FlatButton}" Command="{Binding ExportCsvCommand}"
-                                        HorizontalContentAlignment="Left" Padding="10,8">
-                                    <TextBlock Text="Export as CSV" FontSize="12.5"/>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-                    </Popup>
-                </Grid>
-
-            </StackPanel>
+            <Border DockPanel.Dock="Right" VerticalAlignment="Center" CornerRadius="11" Padding="10,4"
+                    ToolTip="{Binding DataSourceDetail}" ToolTipService.InitialShowDelay="200"
+                    Visibility="{Binding IsGraphActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource WarningBgBrush}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRealData}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource SuccessBgBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,7,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource WarningBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRealData}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding DataSourceLabel}" FontSize="11.5" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Foreground" Value="{StaticResource WarningTextBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRealData}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
         </DockPanel>
     </Border>
 </UserControl>

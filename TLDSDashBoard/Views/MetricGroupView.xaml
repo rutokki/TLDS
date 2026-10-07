@@ -62,11 +62,11 @@
             <TextBlock DockPanel.Dock="Left" Text="{Binding Data.Header}" Style="{StaticResource SectionTitle}"/>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Rectangle Width="14" Height="2" Fill="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                <TextBlock Text="측정" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,14,0"/>
+                <TextBlock Text="측정" Style="{StaticResource LegendText}"/>
                 <Rectangle Width="14" Height="2" Fill="{StaticResource CheckedLineBrush}" VerticalAlignment="Center"/>
-                <TextBlock Text="점검" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,14,0"/>
+                <TextBlock Text="점검" Style="{StaticResource LegendText}"/>
                 <Rectangle Width="14" Height="2" Fill="{StaticResource MinimumLineBrush}" VerticalAlignment="Center"/>
-                <TextBlock Text="최소" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="4,0,0,0"/>
+                <TextBlock Text="최소" Style="{StaticResource LegendText}" Margin="5,0,0,0"/>
             </StackPanel>
         </DockPanel>
 
@@ -120,12 +120,12 @@
                                                           StrokeThickness="2"/>
                                                 </Canvas>
                                             </Viewbox>
-                                            <TextBlock Text="{Binding AxisMaxLabel}" FontSize="9" FontFamily="{StaticResource MonoFont}"
-                                                       Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"
-                                                       VerticalAlignment="Top" Margin="0,2,4,0"/>
-                                            <TextBlock Text="{Binding AxisMinLabel}" FontSize="9" FontFamily="{StaticResource MonoFont}"
-                                                       Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"
-                                                       VerticalAlignment="Bottom" Margin="0,0,4,2"/>
+                                            <Border Style="{StaticResource LaneAxisLabelBox}" VerticalAlignment="Top" Margin="0,2,4,0">
+                                                <TextBlock Text="{Binding AxisMaxLabel}" Style="{StaticResource LaneAxisLabelText}"/>
+                                            </Border>
+                                            <Border Style="{StaticResource LaneAxisLabelBox}" VerticalAlignment="Bottom" Margin="0,0,4,2">
+                                                <TextBlock Text="{Binding AxisMinLabel}" Style="{StaticResource LaneAxisLabelText}"/>
+                                            </Border>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -151,8 +151,8 @@
                                 <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="10,8">
                                     <StackPanel>
-                                        <TextBlock Text="{Binding Data.HoverTimeLabel}" FontSize="10.5" FontFamily="{StaticResource MonoFont}"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <TextBlock Text="{Binding Data.HoverTimeLabel}" FontSize="13" FontFamily="{StaticResource MonoFont}"
+                                                   Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
                                         <ItemsControl ItemsSource="{Binding Data.Series}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>

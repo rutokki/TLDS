@@ -28,6 +28,6 @@
                   ItemTemplate="{StaticResource TwoDigit}" MinWidth="52" Margin="0,0,2,0"/>
         <TextBlock Text=":" Style="{StaticResource FilterLabel}"/>
         <ComboBox ItemsSource="{Binding Filter.Minutes}" SelectedItem="{Binding Filter.EndMinute}"
-                  ItemTemplate="{StaticResource TwoDigit}"/>
+                  ItemTemplate="{StaticResource TwoDigit}" MinWidth="52"/>
     </StackPanel>
 </UserControl>
