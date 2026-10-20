@@ -5,13 +5,13 @@ using TLDSDashBoard.Models;
 namespace TLDSDashBoard.Services;
 
 /// <summary>
-/// Reads real track-circuit telemetry from the per-hour log files at TLDSDashBoard/_file_log/{yyyy}/{MM}/
-/// {yyyy-MM-dd-HH}.db (table Level12 — Level01 in older files: Time INT, Idx WORD, Type WORD, Value0..Value11 WORD).
-/// Idx is the device index (matches TrackCircuit.Idx / ReferenceData.Tracks); Type distinguishes
-/// measured-value rows (0, what this reads) from per-channel status/flag rows (1, not used here).
+/// TLDSDashBoard/_file_log/{yyyy}/{MM}/{yyyy-MM-dd-HH}.db의 시간별 로그 파일에서 실제 궤도회로
+/// 텔레메트리를 읽는다(테이블 Level12 — 구버전 파일은 Level01: Time INT, Idx WORD, Type WORD, Value0..Value11 WORD).
+/// Idx는 장치 인덱스(TrackCircuit.Idx / ReferenceData.Tracks와 일치)이고, Type은 측정값 행(0, 여기서 읽는 것)과
+/// 채널별 상태/플래그 행(1, 여기서는 쓰지 않음)을 구분한다.
 ///
-/// Value0..Value5 map to the 6 channels in ChannelCatalog order (궤도/차상/지상 주파수, 송신/수신A/수신B 전압);
-/// Value6..Value11 are read but not used. The schema itself carries no channel labels.
+/// Value0..Value5는 ChannelCatalog 순서의 6개 채널(궤도/차상/지상 주파수, 송신/수신A/수신B 전압)에 대응하고,
+/// Value6..Value11은 읽기만 하고 쓰지 않는다. 스키마 자체에는 채널 라벨이 없다.
 /// </summary>
 public sealed class RealTelemetryRepository : IChannelDataRepository
 {
@@ -39,9 +39,14 @@ public sealed class RealTelemetryRepository : IChannelDataRepository
         }
 
         var timestamps = rows.Select(r => r.Time).ToArray();
+        // Value0..5는 원시 장치 정수(YK-900A 통신전문)다 — 여기서 한 번만 실제 단위로 변환해, 모든 소비자
+        // (차트, 표, CSV)가 Hz/V를 바로 보게 한다. 채널별 Scale은 ChannelCatalog에 있다.
         double[] Col(int i)
         {
-            return rows.Select(r => (double)r.Values[i]).ToArray();
+            double scale = ChannelCatalog.ChannelScaleAt(i);
+            int decimals = ChannelCatalog.ChannelDecimals(ChannelCatalog.ChannelIds[i]);
+            // 규격 해상도로 반올림해서, 예컨대 70 × 0.01이 0.7000000000000001이 아니라 0.7이 되게 한다(CSV에서 중요).
+            return rows.Select(r => Math.Round(r.Values[i] * scale, decimals)).ToArray();
         }
 
         return new ChannelDataSet
@@ -65,7 +70,7 @@ public sealed class RealTelemetryRepository : IChannelDataRepository
         conn.Open();
 
         string? table = FindLevelTable(conn);
-        if (table is null) return result; // no Level table in this hour file — treat as no data
+        if (table is null) return result; // 이 시간 파일에 Level 테이블이 없음 — 데이터 없음으로 처리
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = $@"
@@ -88,9 +93,9 @@ public sealed class RealTelemetryRepository : IChannelDataRepository
         return result;
     }
 
-    /// <summary>Current TLDS writes the measured-value table as "Level12"; hour files from older installs
-    /// use "Level01". Prefer Level12, fall back to Level01, so both generations of log files are read.
-    /// (SetValue.db's threshold table is still Level01 — see ThresholdRepository — and is unaffected.)</summary>
+    /// <summary>현재 TLDS는 측정값 테이블을 "Level12"로 쓰고, 구버전 설치의 시간 파일은 "Level01"을 쓴다.
+    /// Level12를 우선하고 Level01로 폴백해서 두 세대의 로그 파일을 모두 읽는다.
+    /// (SetValue.db의 임계값 테이블은 여전히 Level01이고 — ThresholdRepository 참고 — 영향받지 않는다.)</summary>
     private static readonly string[] LevelTableNames = { "Level12", "Level01" };
 
     private static string? FindLevelTable(SqliteConnection conn)

@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace TLDSDashBoard.Converters;
 
-/// <summary>Converts an "M x,y L x,y ..." path-data string (as produced by PathBuilder) into a Geometry for binding to Path.Data.</summary>
+/// <summary>"M x,y L x,y ..." 형식의 경로 데이터 문자열(PathBuilder가 만든 것)을 Path.Data에 바인딩할 Geometry로 변환한다.</summary>
 public sealed class PathDataConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

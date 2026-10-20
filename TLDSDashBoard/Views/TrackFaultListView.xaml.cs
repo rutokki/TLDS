@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace TLDSDashBoard.Views;
 
-/// <summary>See LevelRecordListView for why the merged header lives in its own horizontal-only
-/// ScrollViewer instead of wrapping the DataGrid — this keeps the DataGrid's own scrolling (and
-/// therefore its UI virtualization) intact, syncing only the header's horizontal offset here.</summary>
+/// <summary>병합 헤더가 DataGrid를 감싸는 대신 자신만의 가로 전용 ScrollViewer 안에 있는 이유는
+/// LevelRecordListView를 참고 — 이렇게 하면 DataGrid 자체의 스크롤(그리고 UI 가상화)이 유지되고, 여기서는
+/// 헤더의 가로 오프셋만 동기화한다.</summary>
 public partial class TrackFaultListView : UserControl
 {
     public TrackFaultListView()

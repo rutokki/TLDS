@@ -10,7 +10,7 @@
 
     <Grid>
 
-        <!-- App shell: sidebar + main content -->
+        <!-- 앱 셸: 사이드바 + 메인 콘텐츠 -->
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -27,9 +27,9 @@
 
                 <views:TopbarView Grid.Row="0"/>
 
-                <!-- Not wrapped in a ScrollViewer: the list pages need their DataGrid to fill/scroll this
-                     area internally (a "*" row inside a ScrollViewer collapses to content size). GraphPageView
-                     scrolls itself internally instead, since its lane-chart content can be taller than the window. -->
+                <!-- ScrollViewer로 감싸지 않음: 목록 페이지들은 DataGrid가 이 영역을 채우고 내부에서 스크롤해야 한다
+                     ("*" 행은 ScrollViewer 안에서는 콘텐츠 크기로 줄어든다). GraphPageView는 레인 차트 콘텐츠가
+                     창보다 클 수 있어서 대신 스스로 내부 스크롤한다. -->
                 <Grid Grid.Row="1" Margin="28,22">
                     <views:TrainOccupancyView Visibility="{Binding IsOccupancyActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     <views:TrackFaultListView Visibility="{Binding IsTrackFaultActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
@@ -40,7 +40,7 @@
             </Grid>
         </Grid>
 
-        <!-- Overlays -->
+        <!-- 오버레이 -->
         <views:DrillModalView/>
         <views:HourlyStatusModalView/>
         <views:ToastView/>

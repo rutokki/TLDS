@@ -47,8 +47,8 @@ public sealed class TrackFaultListViewModel : ViewModelBase
         SearchCommand = new RelayCommand(Search);
         ExportCsvCommand = new RelayCommand(ExportCsv);
         PrintCommand = new RelayCommand(() => StatusMessage = "인쇄를 준비 중입니다.");
-        // No auto-search on load (OverView is the only page that renders data by default) — this page
-        // starts empty until the user picks filters and clicks 조회.
+        // 시작 시 자동 조회하지 않는다(기본으로 데이터를 그리는 페이지는 OverView뿐) — 이 페이지는 사용자가
+        // 필터를 고르고 조회를 누를 때까지 비어 있다.
     }
 
     private static readonly string[] ChannelLabels =
@@ -109,7 +109,7 @@ public sealed class TrackFaultListViewModel : ViewModelBase
         };
 
         foreach (var row in rows) Results.Add(row);
-        // No sample-data fallback: an empty result means the real Alarm log has nothing for this filter.
+        // 샘플 데이터 폴백 없음: 결과가 비어 있으면 실제 Alarm 로그에 이 필터에 해당하는 것이 없다는 뜻이다.
         StatusMessage = Results.Count > 0
             ? $"{Results.Count}건 조회됨"
             : "해당 기간/조건의 장애·경보 기록이 없습니다.";
@@ -117,12 +117,11 @@ public sealed class TrackFaultListViewModel : ViewModelBase
 
     private static readonly IChannelDataRepository Telemetry = new RealTelemetryRepository();
 
-    /// <summary>Reads _file_db/Event-{yyyy-MM-dd}.db's Alarm table for every day in [start,end], keeping
-    /// only rows whose DEVICE_NAME matches one of the tracks being queried. The Alarm table has no
-    /// IMP/AF/channel-snapshot columns, so TrackType comes from the matched TrackCircuit, 표준/점검/최소
-    /// from ThresholdRepository (SetValue.db), and 측정 from the real _file_log sample at the alarm's
-    /// generate time (first sample within 60초 after it). When no such sample exists 측정 is left blank —
-    /// never estimated.</summary>
+    /// <summary>[start,end]의 모든 날에 대해 _file_db/Event-{yyyy-MM-dd}.db의 Alarm 테이블을 읽되, DEVICE_NAME이
+    /// 조회 대상 궤도 중 하나와 일치하는 행만 남긴다. Alarm 테이블에는 IMP/AF/채널 스냅샷 컬럼이 없으므로
+    /// TrackType은 일치한 TrackCircuit에서, 표준/점검/최소는 ThresholdRepository(SetValue.db)에서, 측정은 알람
+    /// 발생 시각의 실제 _file_log 샘플(그 뒤 60초 이내의 첫 샘플)에서 가져온다. 그런 샘플이 없으면 측정은
+    /// 빈칸으로 두고 — 절대 추정하지 않는다.</summary>
     private static List<TrackFaultRecord> LoadRealAlarms(IReadOnlyDictionary<string, TrackCircuit> tracksByName, DateTime start, DateTime end)
     {
         var results = new List<TrackFaultRecord>();
@@ -134,7 +133,7 @@ public sealed class TrackFaultListViewModel : ViewModelBase
                 if (!tracksByName.TryGetValue(alarm.DeviceName, out var track)) continue;
 
                 var thresholds = ThresholdRepository.LoadForDevice(track.Idx);
-                if (thresholds is null) continue; // no channel data to show for this device
+                if (thresholds is null) continue; // 이 장치에 표시할 채널 데이터가 없음
 
                 ChannelDataSet? sample = null;
                 try { sample = Telemetry.LoadRange(track.Idx, alarm.GeneratedAt, alarm.GeneratedAt.AddSeconds(60)); }

@@ -1,12 +1,12 @@
 namespace TLDSDashBoard.Models;
 
 /// <summary>
-/// The six telemetry series (주파수 3 + 전압 3), one sample per <see cref="Timestamps"/> entry (DB-backed:
-/// one row per second, all channels sampled together — see Services/RealTelemetryRepository).
+/// 6개 텔레메트리 계열(주파수 3 + 전압 3). <see cref="Timestamps"/> 항목 하나당 샘플 하나(DB 기반:
+/// 초당 1행, 모든 채널을 함께 샘플링 — Services/RealTelemetryRepository 참고).
 /// </summary>
 public sealed class ChannelDataSet
 {
-    /// <summary>Sample time for index i of every channel array below (same length as each array). 1-second sampling interval.</summary>
+    /// <summary>아래 모든 채널 배열의 인덱스 i에 해당하는 샘플 시각(각 배열과 길이가 같음). 샘플링 간격은 1초.</summary>
     public required DateTime[] Timestamps { get; init; }
 
     public required double[] TRK_FREQ { get; init; } // 궤도 주파수 (Value0)
@@ -16,8 +16,8 @@ public sealed class ChannelDataSet
     public required double[] RX_A_VOLTAGE { get; init; } // 수신 A 전압 (Value4)
     public required double[] RX_B_VOLTAGE { get; init; } // 수신 B 전압 (Value5)
 
-    /// <summary>Series by channel id (Services/ChannelCatalog ids) — lets pages loop over the catalog
-    /// instead of naming each property.</summary>
+    /// <summary>채널 id(Services/ChannelCatalog의 id)로 찾는 계열 — 각 프로퍼티 이름을 일일이 쓰지 않고
+    /// 페이지가 카탈로그를 순회할 수 있게 한다.</summary>
     public double[] Get(string channelId)
     {
         return channelId switch

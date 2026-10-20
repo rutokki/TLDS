@@ -3,10 +3,10 @@ using TLDSDashBoard.ViewModels;
 namespace TLDSDashBoard.ViewModels.Items;
 
 /// <summary>
-/// One channel's chart state. Used two ways: mutably by the drill-in modal (zoom/pan/hover all update
-/// it live while the modal stays open — see ChannelSeriesVM for the same reasoning), and as a plain
-/// once-computed snapshot by 그래프 상세검색's channel grid (no zoom/pan there, so Hover* just stay
-/// unset). Either way the shape is the same, so one class covers both instead of two near-duplicates.
+/// 채널 하나의 차트 상태. 두 가지로 쓰인다: 드릴인 모달에서는 가변으로 쓰여(모달이 열려 있는 동안 줌/팬/호버가
+/// 모두 실시간으로 갱신함 — 같은 이유는 ChannelSeriesVM 참고), 그래프 상세검색의 채널 격자에서는 한 번 계산한
+/// 단순 스냅샷으로 쓰인다(거기에는 줌/팬이 없어서 Hover*는 설정되지 않은 채로 남음). 어느 쪽이든
+/// 모양이 같아서, 비슷한 클래스 두 개 대신 하나로 둘 다 처리한다.
 /// </summary>
 public sealed class DrillDataVM : ViewModelBase
 {
@@ -34,7 +34,7 @@ public sealed class DrillDataVM : ViewModelBase
     private string _minimumLinePath = "";
     public string MinimumLinePath { get => _minimumLinePath; set => SetProperty(ref _minimumLinePath, value); }
 
-    /// <summary>Start~end timestamps of the currently visible (zoomed/panned) window.</summary>
+    /// <summary>현재 보이는(줌/팬된) 창의 시작~끝 시각.</summary>
     private string _rangeLabel = "";
     public string RangeLabel { get => _rangeLabel; set => SetProperty(ref _rangeLabel, value); }
 
@@ -42,7 +42,7 @@ public sealed class DrillDataVM : ViewModelBase
     private string _windowLabel = "";
     public string WindowLabel { get => _windowLabel; set => SetProperty(ref _windowLabel, value); }
 
-    /// <summary>Live value under the cursor; empty when the mouse isn't over the chart (drill-in modal only).</summary>
+    /// <summary>커서 아래의 실시간 값. 마우스가 차트 위에 없으면 비어 있다(드릴인 모달 전용).</summary>
     private string? _hoverValue;
     public string? HoverValue { get => _hoverValue; set => SetProperty(ref _hoverValue, value); }
 

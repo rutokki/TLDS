@@ -28,19 +28,18 @@ public sealed class LevelRecordListViewModel : ViewModelBase
         }
     }
 
-    private TrackCircuit _selectedTrack = null!; // assigned by RebuildTracks() in the constructor below
+    private TrackCircuit _selectedTrack = null!; // 아래 생성자에서 RebuildTracks()가 지정함
     public TrackCircuit SelectedTrack { get => _selectedTrack; set => SetProperty(ref _selectedTrack, value); }
 
-    /// <summary>User-settable 시작~종료 (date+hour+minute on both ends), same control as 그래프
-    /// 상세검색/궤도장애 — replaces the old fixed 24×1시간 block combo now that rows are per-second and the
-    /// user needs to target an exact window, not just an hour bucket. Search() clamps the span to
-    /// <see cref="MaxSpan"/>.</summary>
+    /// <summary>사용자가 설정하는 시작~종료(양쪽 모두 날짜+시+분), 그래프 상세검색/궤도장애와 같은 컨트롤 —
+    /// 이제 행이 초 단위이고 사용자가 한 시간 단위 묶음이 아니라 정확한 창을 지정해야 하므로, 예전의
+    /// 24×1시간 고정 블록 콤보를 대체한다. Search()가 기간을 <see cref="MaxSpan"/>으로 제한한다.</summary>
     public DateRangeFilter Range { get; } = new();
 
-    // A settable property (not a fixed collection mutated via Add) so Search() can swap in a whole new
-    // ObservableCollection in one PropertyChanged notification instead of one CollectionChanged per row —
-    // "전체 궤도" × 1시간 초단위 조회 can mean tens of thousands of rows, and Add-in-a-loop against a bound
-    // DataGrid at that volume visibly freezes the UI thread (same class of issue as the graph-page lag).
+    // 고정 컬렉션에 Add하는 방식이 아니라 설정 가능한 프로퍼티로 두어서, Search()가 행마다 CollectionChanged를
+    // 일으키는 대신 PropertyChanged 한 번으로 새 ObservableCollection 통째로 바꿀 수 있게 한다 —
+    // "전체 궤도" × 1시간 초단위 조회는 수만 행이 될 수 있고, 바인딩된 DataGrid에 반복문으로 Add하면
+    // 그 규모에서 UI 스레드가 눈에 띄게 멈춘다(그래프 페이지 지연과 같은 종류의 문제).
     private ObservableCollection<LevelRecord> _results = new();
     public ObservableCollection<LevelRecord> Results { get => _results; private set => SetProperty(ref _results, value); }
 
@@ -55,8 +54,8 @@ public sealed class LevelRecordListViewModel : ViewModelBase
         RebuildTracks();
         SearchCommand = new RelayCommand(Search);
         ExportCsvCommand = new RelayCommand(ExportCsv);
-        // No auto-search on load (OverView is the only page that renders data by default) — this page
-        // starts empty until the user picks a 기간/궤도 and clicks 조회.
+        // 시작 시 자동 조회하지 않는다(기본으로 데이터를 그리는 페이지는 OverView뿐) — 이 페이지는 사용자가
+        // 기간/궤도를 고르고 조회를 누를 때까지 비어 있다.
     }
 
     private static readonly string[] ChannelLabels =
@@ -87,9 +86,9 @@ public sealed class LevelRecordListViewModel : ViewModelBase
         Tracks.Clear();
         Tracks.Add(AllTracks);
         foreach (var t in ReferenceData.TracksForStation(_selectedStation.Id)) Tracks.Add(t);
-        // Default to one specific track, not "전체 궤도" — now that every row is one real second of
-        // telemetry (see Search()), an all-tracks default would mean building tens of thousands of rows
-        // just to render the page for the first time. "전체 궤도" stays available in the combo when wanted.
+        // "전체 궤도"가 아니라 특정 궤도 하나를 기본으로 한다 — 이제 모든 행이 실제 텔레메트리 1초라서
+        // (Search() 참고), 전체 궤도를 기본으로 하면 페이지를 처음 그리기만 해도 수만 행을 만들어야 한다.
+        // "전체 궤도"는 필요할 때 콤보에서 고를 수 있다.
         SelectedTrack = Tracks.Count > 1 ? Tracks[1] : AllTracks;
     }
 
@@ -107,10 +106,9 @@ public sealed class LevelRecordListViewModel : ViewModelBase
         bool foundLog = true;
         if (end - start > MaxSpan)
         {
-            // The 2시간 window used to always begin at the range's start — so a whole-day 조회 (00:00~23:59)
-            // only ever looked at 00:00~02:00 and came back empty whenever the day's logs were later (e.g.
-            // only a 16시 file). Start the window at the first hour inside the range that actually has a
-            // _file_log hour file instead; fall back to the range start when none exists.
+            // 2시간 창이 예전에는 항상 기간의 시작에서 시작해서, 하루 전체 조회(00:00~23:59)가 00:00~02:00만 보고
+            // 그날 로그가 더 늦은 시간뿐이면(예: 16시 파일 하나) 빈 결과가 나왔다. 대신 기간 안에서 실제로 _file_log 시간
+            // 파일이 있는 첫 시각에서 창을 시작하고, 없으면 기간의 시작으로 폴백한다.
             var firstLogged = FirstLoggedHour(start, end);
             foundLog = firstLogged is not null;
             if (firstLogged is { } h && h > start) start = h;
@@ -141,9 +139,9 @@ public sealed class LevelRecordListViewModel : ViewModelBase
             : $"해당 기간의 실측 데이터가 없습니다{clampNote}";
     }
 
-    /// <summary>First hour in [start,end] whose _file_log hour file exists (start itself if that hour has
-    /// one, so a mid-hour start is kept), or null if none does. File-existence only — cheap enough to walk
-    /// a multi-day range hour by hour.</summary>
+    /// <summary>[start,end] 안에서 _file_log 시간 파일이 존재하는 첫 시각(그 시각에 파일이 있으면 start 자체이므로
+    /// 시간 중간의 시작이 유지됨), 없으면 null. 파일 존재 여부만 확인하므로 여러 날 기간도 시간 단위로
+    /// 훑을 만큼 가볍다.</summary>
     private static DateTime? FirstLoggedHour(DateTime start, DateTime end)
     {
         for (var hour = new DateTime(start.Year, start.Month, start.Day, start.Hour, 0, 0); hour <= end; hour = hour.AddHours(1))
@@ -154,12 +152,11 @@ public sealed class LevelRecordListViewModel : ViewModelBase
         return null;
     }
 
-    /// <summary>Builds one LevelRecord per real telemetry sample (1개/초) for every track in
-    /// <paramref name="tracks"/> within [start,end] — the fixed 표준/점검/최소 come from SetValue.db (one
-    /// row per device, not a log) while 측정 comes from the matching real sample in that same second, so
-    /// every row's four values line up on one real point in time. A track with no threshold row, or no
-    /// _file_log coverage for this period, is silently skipped (not an error) — it just contributes zero
-    /// rows, same as TrackFaultListViewModel's per-track real-data loop.</summary>
+    /// <summary>[start,end] 안에서 <paramref name="tracks"/>의 모든 궤도에 대해 실제 텔레메트리 샘플(1개/초)마다
+    /// LevelRecord 하나를 만든다 — 고정된 표준/점검/최소는 SetValue.db(로그가 아니라 장치당 한 행)에서 오고,
+    /// 측정은 같은 초의 해당 실제 샘플에서 오므로, 모든 행의 네 값이 실제 한 시점에 맞춰진다. 임계값 행이 없거나
+    /// 이 기간에 _file_log가 다루지 않는 궤도는 조용히 건너뛴다(오류 아님) — 행이 0개일 뿐이며,
+    /// TrackFaultListViewModel의 궤도별 실데이터 루프와 같다.</summary>
     private static List<LevelRecord> LoadRealRecords(IEnumerable<TrackCircuit> tracks, Station station, DateTime start, DateTime end)
     {
         var results = new List<LevelRecord>();

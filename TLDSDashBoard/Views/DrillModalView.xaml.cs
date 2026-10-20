@@ -6,14 +6,14 @@ using TLDSDashBoard.ViewModels;
 namespace TLDSDashBoard.Views;
 
 /// <summary>
-/// Full-screen drill-in modal. Clicking the dim overlay closes it; clicking the card itself does not
-/// (event is marked handled before it bubbles to the overlay), matching the original prototype's
-/// stopPropagation click-outside-to-close behavior.
+/// 전체 화면 드릴인 모달. 어두운 오버레이를 클릭하면 닫히고, 카드 자체를 클릭해도 닫히지 않는다
+/// (이벤트가 오버레이로 버블링되기 전에 처리됨으로 표시됨). 원래 프로토타입의 stopPropagation
+/// 바깥 클릭 시 닫기 동작과 같다.
 ///
-/// The chart area also supports mouse-wheel zoom (toward the cursor), left-drag pan, and a continuous
-/// hover readout (crosshair + value/time chip) — all driven through MainViewModel.ZoomDrill/PanDrill/
-/// UpdateDrillHover, which own the actual zoom-window state (this view only ever reports fractions of its
-/// own on-screen width, never sample counts, since it has no idea how many samples are currently visible).
+/// 차트 영역은 마우스 휠 줌(커서 쪽으로), 왼쪽 드래그 팬, 연속 호버 읽기(크로스헤어 + 값/시각 칩)도
+/// 지원한다 — 모두 MainViewModel.ZoomDrill/PanDrill/UpdateDrillHover를 통해 구동되며, 이 메서드들이
+/// 실제 줌 창 상태를 소유한다(이 뷰는 자신의 화면상 폭에 대한 비율만 보고하고 샘플 수는 절대 다루지
+/// 않는다. 지금 몇 개의 샘플이 보이는지 모르기 때문이다).
 /// </summary>
 public partial class DrillModalView : UserControl
 {
@@ -52,7 +52,7 @@ public partial class DrillModalView : UserControl
     {
         if (ChartArea.ActualWidth <= 0) return;
         double fraction = Clamp01(e.GetPosition(ChartArea).X / ChartArea.ActualWidth);
-        double factor = e.Delta > 0 ? 0.8 : 1.25; // wheel up = zoom in (smaller window), wheel down = zoom out
+        double factor = e.Delta > 0 ? 0.8 : 1.25; // 휠 위 = 확대(창이 작아짐), 휠 아래 = 축소
         ViewModel?.ZoomDrill(factor, fraction);
         e.Handled = true;
     }

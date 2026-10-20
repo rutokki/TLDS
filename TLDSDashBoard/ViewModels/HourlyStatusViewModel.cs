@@ -7,9 +7,8 @@ using TLDSDashBoard.ViewModels.Items;
 namespace TLDSDashBoard.ViewModels;
 
 /// <summary>
-/// Filter state + results for the 시간별 상태 출력 (hourly status output) modal. One search (기간/역/장치
-/// + conditions) now fills in all 7 category grids at once, instead of requiring a category to be picked
-/// first to see its results.
+/// 시간별 상태 출력 모달의 필터 상태 + 결과. 한 번의 조회(기간/역/장치 + 조건)가 이제 7개 카테고리 그리드를
+/// 한꺼번에 채운다 — 결과를 보려고 카테고리를 먼저 고를 필요가 없다.
 /// </summary>
 public sealed class HourlyStatusViewModel : ViewModelBase
 {
@@ -33,22 +32,110 @@ public sealed class HourlyStatusViewModel : ViewModelBase
             ConditionOptions = BuildConditionOptions(c.Category),
         }));
 
-    /// <summary>Placeholder condition checkboxes for one category — every category gets the same 5 for
-    /// now since the real per-category conditions haven't been decided yet. Swap this out once they are;
-    /// nothing else needs to change (the View already reads ConditionOptions per selected category, not
-    /// a single fixed set).</summary>
-    private static ObservableCollection<HourlyStatusConditionOption> BuildConditionOptions(HourlyStatusCategory category) => new(new[]
+    /// <summary>카테고리별 조건 체크박스: (표시 라벨, 이벤트 CONTENTS 텍스트와 대조할 키워드).
+    /// 시스템 이벤트는 실제 이벤트 로그에서 확인된 내용(시작/종료/접속됨/접속끊김)을 그대로 따르고, 나머지
+    /// 여섯 개는 실제 Event 테이블에 아직 행이 없어서 도메인 지식으로 추정한 값이다 — 실제 문구를 알게 되면
+    /// 여기의 라벨/키워드만 고치면 되고 다른 것은 바꿀 필요가 없다.</summary>
+    private static readonly Dictionary<HourlyStatusCategory, (string Label, string[] Keywords)[]> ConditionDefs = new()
     {
-        new HourlyStatusConditionOption { Label = "부정 점유" },
-        new HourlyStatusConditionOption { Label = "전압 주의" },
-        new HourlyStatusConditionOption { Label = "전압 장애" },
-        new HourlyStatusConditionOption { Label = "퓨즈 고장" },
-        new HourlyStatusConditionOption { Label = "통신 고장" },
-    });
+        [HourlyStatusCategory.TrackFault] = new[]
+        {
+            ("부정 점유", new[] { "부정 점유" }),
+            ("전압 주의", new[] { "전압 주의" }),
+            ("전압 장애", new[] { "전압 장애" }),
+            ("퓨즈 고장", new[] { "퓨즈 고장" }),
+            ("통신 고장", new[] { "통신 고장" }),
+        },
+        [HourlyStatusCategory.SignalFailure] = new[]
+        {
+            ("고장", new[] { "고장" }),
+            ("FLR", new[] { "FLR" }),
+
+        },
+        [HourlyStatusCategory.SwitchMachineFailure] = new[]
+        {
+
+            ("불일치", new[] { "불일치" }),
+
+        },
+        [HourlyStatusCategory.BlockDeviceFailure] = new[]
+        {
+            ("폐색 고장", new[] { "폐색 고장" }),
+            ("송신 모듈 이상", new[] { "송신 모듈 이상" }),
+            ("수신 모듈 고장", new[] { "수신 모듈 고장" }),
+            ("주계/부계 고장", new[] { "주계/부계 고장" }),
+
+        },
+        [HourlyStatusCategory.LeuFailure] = new[]
+        {
+            ("LEU 고장", new[] { "LEU 고장" }),
+
+        },
+        [HourlyStatusCategory.SignalEquipmentEvent] = new[]
+        {
+            ("궤도", new[] { "궤도" }),
+            ("신호기", new[] { "신호기" }),
+            ("선로전환기", new[] { "선로전환기" }),
+
+        },
+        [HourlyStatusCategory.SystemEvent] = new[]
+        {
+            ("시작", new[] { "시작" }),
+            ("종료", new[] { "종료" }),
+            ("통신", new[] { "통신" }),
+            ("1계/2계", new[] { "1계", "2계" }),
+        },
+    };
+
+    private static ObservableCollection<HourlyStatusConditionOption> BuildConditionOptions(HourlyStatusCategory category)
+    {
+        return new(ConditionDefs[category].Select(d => new HourlyStatusConditionOption
+        {
+            Label = d.Label,
+            Keywords = d.Keywords,
+            DeviceChoices = category == HourlyStatusCategory.SignalEquipmentEvent ? DeviceChoicesFor(d.Label) : null,
+        }));
+    }
+
+    /// <summary>신호설비 이벤트's 궤도/신호기/선로전환기 checkboxes each get a ComboBox of that kind of
+    /// device's names (from index_{역}.xml via ReferenceData), "전체" first. Matched by checkbox label.</summary>
+    private static IReadOnlyList<string>? DeviceChoicesFor(string label)
+    {
+        IEnumerable<string>? names = label switch
+        {
+            "궤도" => ReferenceData.Tracks.Select(t => t.Name).Distinct(),
+            "신호기" => ReferenceData.Signals,
+            "선로전환기" => ReferenceData.Switches,
+            _ => null,
+        };
+        return names is null ? null : new[] { HourlyStatusConditionOption.AllDevices }.Concat(names).ToList();
+    }
+
+    /// <summary>이벤트의 DEVICE_NAME이 선택한 장치와 같으면 true: 완전 일치이거나, 이름이 마지막 공백 구분
+    /// 단어인 경우(예: "신호기 3A") — 단순 Contains는 "3T"가 "23T"와 일치해 버린다.</summary>
+    private static bool IsDevice(string deviceName, string picked)
+    {
+        return deviceName.Equals(picked, StringComparison.OrdinalIgnoreCase)
+        || deviceName.EndsWith(" " + picked, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>모든 체크박스가 체크되어 있고 선택한 장치가 없으면(기본) 필터링하지 않으므로, 나열된 조건과 문구가
+    /// 하나도 맞지 않는 이벤트도 그대로 보인다. 그 외에는 체크된 조건 중 하나 이상과 맞는 행으로 좁힌다:
+    /// 그 체크박스에 장치를 골랐으면 장치명으로(이때는 장치가 판별 기준이고 이벤트 문구는 필요 없음),
+    /// 아니면 이벤트 내용의 키워드로 맞춘다.</summary>
+    private static List<HourlyStatusEventRecord> ApplyConditions(
+        IReadOnlyList<HourlyStatusEventRecord> rows, IReadOnlyCollection<HourlyStatusConditionOption> options)
+    {
+        if (options.All(o => o.IsChecked && o.PickedDevice is null)) return rows.ToList();
+        var active = options.Where(o => o.IsChecked).ToList();
+        return rows.Where(r => active.Any(o => o.PickedDevice is { } device
+            ? IsDevice(r.DeviceName, device)
+            : o.Keywords.Any(k => r.Content.Contains(k, StringComparison.Ordinal)))).ToList();
+    }
 
     private HourlyStatusCategoryGroup _selectedGroup;
-    /// <summary>Which category's grid is shown on the right. Purely a display switch — every category's
-    /// data is already loaded by <see cref="Search"/>, so changing this does not re-query anything.</summary>
+    /// <summary>오른쪽에 표시할 카테고리 그리드. 순전히 표시 전환용이다 — 모든 카테고리의 데이터는 이미
+    /// <see cref="Search"/>가 읽어 두었으므로, 이것을 바꿔도 다시 조회하지 않는다.</summary>
     public HourlyStatusCategoryGroup SelectedGroup { get => _selectedGroup; set => SetProperty(ref _selectedGroup, value); }
 
     public ObservableCollection<Station> Stations { get; } = new(ReferenceData.Stations);
@@ -88,14 +175,14 @@ public sealed class HourlyStatusViewModel : ViewModelBase
         PrintCommand = new RelayCommand(() => StatusMessage = "인쇄를 준비 중입니다.");
         CloseCommand = new RelayCommand(() => IsOpen = false);
 
-        // No auto-search on construction (OverView is the only page that renders data by default) — the
-        // modal starts empty until 조회 is clicked; Open() still re-runs Search() on each reopen so it
-        // reflects filter changes made while it was last closed (unchanged behavior).
+        // 생성 시 자동 조회하지 않는다(기본으로 데이터를 그리는 페이지는 OverView뿐) — 조회를 누를 때까지
+        // 모달은 비어 있다. 다만 Open()은 다시 열 때마다 Search()를 다시 실행해서, 마지막으로 닫혀 있던 동안
+        // 바뀐 필터 변경이 반영되게 한다(기존 동작 그대로).
     }
 
-    /// <summary>Exports whichever category is currently shown (<see cref="SelectedGroup"/>) — every
-    /// category is loaded at once by Search(), but only one is visible in the grid at a time, so that's
-    /// what "CSV 저장" saves rather than all seven categories at once.</summary>
+    /// <summary>현재 표시 중인 카테고리(<see cref="SelectedGroup"/>)를 내보낸다 — Search()가 모든 카테고리를
+    /// 한꺼번에 읽지만 그리드에는 한 번에 하나만 보이므로, "CSV 저장"은 일곱 카테고리 전체가 아니라
+    /// 그것을 저장한다.</summary>
     private void ExportCsv()
     {
         var headers = new[] { "발생시각", "역 명칭", "장치이름", "내용" };
@@ -108,7 +195,7 @@ public sealed class HourlyStatusViewModel : ViewModelBase
             StatusMessage = "CSV로 저장했습니다.";
     }
 
-    /// <summary>Opens the modal and re-runs the search so it reflects any filter changes since it was last closed.</summary>
+    /// <summary>모달을 열고 조회를 다시 실행해서, 마지막으로 닫은 뒤 바뀐 필터가 반영되게 한다.</summary>
     public void Open()
     {
         IsOpen = true;
@@ -132,8 +219,8 @@ public sealed class HourlyStatusViewModel : ViewModelBase
         int total = 0;
         foreach (var group in CategoryGroups)
         {
-            // Real Event log only — no sample-data fallback for empty categories/periods.
-            var rows = realByCategory[group.Category];
+            // 실제 이벤트 로그만 쓴다 — 비어 있는 카테고리/기간에 대한 샘플 데이터 폴백은 없다.
+            var rows = ApplyConditions(realByCategory[group.Category], group.ConditionOptions);
 
             if (ExcludeHourRange)
             {
@@ -153,13 +240,12 @@ public sealed class HourlyStatusViewModel : ViewModelBase
             : "해당 기간의 이벤트 기록이 없습니다.";
     }
 
-    /// <summary>Reads _file_db/Event-{yyyy-MM-dd}.db's Event table for every day in [start,end] and buckets
-    /// each row into one of the 7 categories. The real DEVICE_TYPE→category code table hasn't been
-    /// documented anywhere we've seen yet — only DEVICE_TYPE=4 has actually been observed, for
-    /// system-level connect/disconnect events (TLDS/임펄스랙*/연동장치). Until the real mapping is known,
-    /// this guesses from DEVICE_NAME content instead, which at least keys off text we can already read
-    /// (see CategorizeByDeviceName) rather than an unverified numeric code — swap this out once the real
-    /// DEVICE_TYPE table is confirmed.</summary>
+    /// <summary>[start,end]의 모든 날에 대해 _file_db/Event-{yyyy-MM-dd}.db의 Event 테이블을 읽고, 각 행을
+    /// 7개 카테고리 중 하나로 분류한다. 실제 DEVICE_TYPE→카테고리 코드표는 아직 어디에도 문서화된 것을
+    /// 보지 못했고, DEVICE_TYPE=4만 시스템 수준 접속/접속끊김 이벤트(TLDS/임펄스랙*/연동장치)에서 실제로
+    /// 관찰되었다. 실제 매핑을 알기 전까지는 대신 DEVICE_NAME 내용으로 추측하는데, 확인되지 않은 숫자 코드보다
+    /// 적어도 이미 읽을 수 있는 텍스트를 기준으로 하기 때문이다(CategorizeByDeviceName 참고) — 실제
+    /// DEVICE_TYPE 표가 확인되면 이것을 교체한다.</summary>
     private static Dictionary<HourlyStatusCategory, List<HourlyStatusEventRecord>> LoadRealEvents(DateTime start, DateTime end)
     {
         var result = Enum.GetValues<HourlyStatusCategory>().ToDictionary(c => c, _ => new List<HourlyStatusEventRecord>());
@@ -181,14 +267,17 @@ public sealed class HourlyStatusViewModel : ViewModelBase
         return result;
     }
 
-    private static HourlyStatusCategory CategorizeByDeviceName(string deviceName) => deviceName switch
+    private static HourlyStatusCategory CategorizeByDeviceName(string deviceName)
     {
-        var n when n.Contains("LEU") => HourlyStatusCategory.LeuFailure,
-        var n when n.Contains("선로전환기") || n.Contains("전환기") => HourlyStatusCategory.SwitchMachineFailure,
-        var n when n.Contains("신호기") => HourlyStatusCategory.SignalFailure,
-        var n when n.Contains("폐색") => HourlyStatusCategory.BlockDeviceFailure,
-        var n when n.Contains("궤도") => HourlyStatusCategory.TrackFault,
-        var n when n.Contains("임펄스랙") || n.Contains("연동장치") || n == "TLDS" => HourlyStatusCategory.SystemEvent,
-        _ => HourlyStatusCategory.SignalEquipmentEvent,
-    };
+        return deviceName switch
+        {
+            var n when n.Contains("LEU") => HourlyStatusCategory.LeuFailure,
+            var n when n.Contains("선로전환기") || n.Contains("전환기") => HourlyStatusCategory.SwitchMachineFailure,
+            var n when n.Contains("신호기") => HourlyStatusCategory.SignalFailure,
+            var n when n.Contains("폐색") => HourlyStatusCategory.BlockDeviceFailure,
+            var n when n.Contains("궤도") => HourlyStatusCategory.TrackFault,
+            var n when n.Contains("임펄스랙") || n.Contains("연동장치") || n == "TLDS" => HourlyStatusCategory.SystemEvent,
+            _ => HourlyStatusCategory.SignalEquipmentEvent,
+        };
+    }
 }

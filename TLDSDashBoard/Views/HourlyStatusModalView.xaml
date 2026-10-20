@@ -32,7 +32,7 @@
         </Style>
     </UserControl.Resources>
 
-    <!-- DataContext is overridden here (not on the UserControl root) — see MetricGroupView for the same pattern. -->
+    <!-- DataContext를 UserControl 루트가 아니라 여기서 재정의한다 — 같은 패턴은 MetricGroupView 참고. -->
     <Grid x:Name="Overlay" DataContext="{Binding HourlyStatus}" Background="{StaticResource OverlayDimBrush}"
           Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibilityConverter}}"
           MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
@@ -63,9 +63,9 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Categories are separate again — but 조회 loads all 7 at once (Search() in the VM),
-                         so clicking a different category here only switches which already-loaded grid is
-                         shown (SelectedGroup), it does not re-query. -->
+                    <!-- 카테고리는 다시 따로 나뉘어 있지만, 조회가 7개를 한꺼번에 읽는다(VM의 Search()). 그래서 여기서
+                         다른 카테고리를 클릭하면 이미 읽어 둔 어느 그리드를 보여줄지(SelectedGroup)만 바뀌고
+                         다시 조회하지 않는다. -->
                     <ListBox Grid.Column="0" ItemsSource="{Binding CategoryGroups}" SelectedItem="{Binding SelectedGroup}"
                               DisplayMemberPath="Label" Background="Transparent" BorderThickness="0"
                               ItemContainerStyle="{StaticResource CategoryItem}" Margin="0,0,16,0"/>
@@ -77,8 +77,8 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Filters (own row) + action buttons (own row) — kept as two separate rows rather than
-                             one WrapPanel, so the button group never gets split apart by an awkward mid-group wrap. -->
+                        <!-- 필터(한 행) + 동작 버튼(한 행) — WrapPanel 하나로 합치지 않고 두 행으로 나눠서, 버튼 묶음이
+                             어정쩡하게 중간에서 줄바꿈되며 갈라지는 일이 없게 한다. -->
                         <StackPanel Grid.Row="0" Margin="0,0,0,12">
                             <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="검색 기간" Style="{StaticResource FilterLabel}"/>
@@ -105,10 +105,9 @@
                             </WrapPanel>
                         </StackPanel>
 
-                        <!-- Condition checkboxes — per-category (SelectedGroup.ConditionOptions), not one
-                             fixed row shared by all 7 categories. Placeholder items for now; the actual
-                             per-category conditions are still TBD (see HourlyStatusViewModel.BuildConditionOptions),
-                             switching categories on the left already swaps this row to that category's set. -->
+                        <!-- 조건 체크박스 — 7개 카테고리가 공유하는 고정된 한 줄이 아니라 카테고리별(SelectedGroup.ConditionOptions)이다.
+                             각 그룹의 구성과 키워드는 HourlyStatusViewModel.ConditionDefs에 정의되어 있고 Search()가 필터로
+                             적용한다. -->
                         <StackPanel Grid.Row="1" Margin="0,0,0,12">
                             <ItemsControl ItemsSource="{Binding SelectedGroup.ConditionOptions}">
                                 <ItemsControl.ItemsPanel>
@@ -118,7 +117,13 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" Margin="0,0,16,6"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
+                                            <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" VerticalAlignment="Center"/>
+                                            <!-- Only the 신호설비 이벤트 conditions have DeviceChoices (궤도/신호기/선로전환기 명칭). -->
+                                            <ComboBox ItemsSource="{Binding DeviceChoices}" SelectedItem="{Binding SelectedDevice}"
+                                                      IsEnabled="{Binding IsChecked}" MinWidth="90" Margin="8,0,0,0"
+                                                      Visibility="{Binding HasDeviceChoices, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

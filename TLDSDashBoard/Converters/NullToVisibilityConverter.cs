@@ -4,7 +4,7 @@ using System.Windows.Data;
 
 namespace TLDSDashBoard.Converters;
 
-/// <summary>Visible when the bound value is non-null (and, for strings, non-empty); Collapsed otherwise.</summary>
+/// <summary>바인딩 값이 null이 아니면(문자열은 비어 있지 않아야) Visible, 아니면 Collapsed.</summary>
 public sealed class NullToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

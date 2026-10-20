@@ -7,9 +7,9 @@ using TLDSDashBoard.ViewModels;
 namespace TLDSDashBoard.Views;
 
 /// <summary>
-/// 그래프 상세검색 page — same mouse-wheel zoom / drag pan / hover crosshair as DrillModalView, but for the
-/// single combined channel chart shown inline on this page. See DrillModalView for the interaction
-/// design notes; this is the same logic against GraphDetailSearchViewModel instead of MainViewModel.
+/// 그래프 상세검색 페이지 — DrillModalView와 같은 마우스 휠 줌 / 드래그 팬 / 호버 크로스헤어이지만, 이 페이지에
+/// 인라인으로 표시되는 하나의 통합 채널 차트용이다. 상호작용 설계 메모는 DrillModalView를 참고;
+/// 이것은 MainViewModel 대신 GraphDetailSearchViewModel에 대해 같은 로직을 쓴다.
 /// </summary>
 public partial class GraphDetailSearchView : UserControl
 {
@@ -32,10 +32,9 @@ public partial class GraphDetailSearchView : UserControl
 
         if (vm.IsVerticalZoomMode)
         {
-            // 세로 확대 모드: wheel resizes lanes instead of the time window, anchored on the cursor —
-            // same idea as the horizontal zoom anchoring on the cursor's X fraction below, just on the Y
-            // axis: whatever content point is under the pointer should stay under it after the resize,
-            // not just grow away from the top.
+            // 세로 확대 모드: 휠이 시간 창 대신 레인 크기를 조절하며, 커서를 기준으로 한다 — 아래 가로 줌이 커서의
+            // X 비율을 기준으로 하는 것과 같은 발상을 Y축에 적용한 것이다: 포인터 아래에 있던 콘텐츠 지점은 크기를
+            // 바꾼 뒤에도 그 아래에 그대로 있어야 하고, 위쪽에서 멀어지듯 커지기만 해서는 안 된다.
             int laneCount = vm.Series.Count;
             if (laneCount > 0)
             {
@@ -49,9 +48,9 @@ public partial class GraphDetailSearchView : UserControl
                 double scaleRatio = oldExtent > 0 ? newExtent / oldExtent : 1;
                 double newOffset = Math.Max(0, contentY * scaleRatio - mouseY);
 
-                // The lane Borders haven't re-measured to their new Height yet at this point in the
-                // handler (that happens on the next layout pass) — defer the actual scroll until after
-                // layout so ScrollToVerticalOffset clamps against the up-to-date ScrollableHeight.
+                // 이 핸들러 시점에는 레인 Border들이 아직 새 Height로 다시 측정되지 않았다(다음 레이아웃 패스에서
+                // 일어난다) — 실제 스크롤은 레이아웃 이후로 미뤄서, ScrollToVerticalOffset이 최신 ScrollableHeight를
+                // 기준으로 범위를 제한하게 한다.
                 Dispatcher.BeginInvoke(new Action(() => LanesScroll.ScrollToVerticalOffset(newOffset)),
                     System.Windows.Threading.DispatcherPriority.Loaded);
             }
@@ -66,13 +65,13 @@ public partial class GraphDetailSearchView : UserControl
         e.Handled = true;
     }
 
-    /// <summary>Recomputes the base (unzoomed) lane height so all lanes exactly fill the lanes
-    /// ScrollViewer's viewport — fires on load and on window resize. LaneHeightScale (see 세로 확대) then
-    /// multiplies this base value; at scale 1.0 all lanes fit with no scrollbar.</summary>
+    /// <summary>기본(확대하지 않은) 레인 높이를 다시 계산해서 모든 레인이 레인 ScrollViewer의 뷰포트를
+    /// 정확히 채우게 한다 — 로드 시와 창 크기 변경 시 실행된다. LaneHeightScale(세로 확대 참고)이 이
+    /// 기본값에 곱해지며, 배율 1.0에서는 모든 레인이 스크롤바 없이 들어간다.</summary>
     private void LanesScroll_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        // Lane count = channel count (ChannelCatalog), not a fixed number — the lanes must fill the
-        // viewport whatever the catalog holds, even before the first 조회 has populated Series.
+        // 레인 수 = 채널 수(ChannelCatalog)이지 고정된 숫자가 아니다 — 첫 조회가 Series를 채우기 전이라도,
+        // 카탈로그에 몇 개가 들어 있든 레인이 뷰포트를 채워야 한다.
         ViewModel?.SetBaseLaneHeight(LanesScroll.ActualHeight / ChannelCatalog.ChannelCount);
     }
 
@@ -98,8 +97,8 @@ public partial class GraphDetailSearchView : UserControl
 
     private void ChartArea_MouseMove(object sender, MouseEventArgs e)
     {
-        // Nothing queried yet (or the last 조회 found no data): no crosshair/tooltip over the empty card —
-        // it used to draw a crosshair and an empty tooltip box over the blank area.
+        // 아직 조회 전(또는 마지막 조회에 데이터가 없음): 빈 카드 위에는 크로스헤어/툴팁이 없다 —
+        // 예전에는 빈 영역 위에 크로스헤어와 빈 툴팁 상자가 그려졌다.
         if (ChartArea.ActualWidth <= 0) return;
         if (ViewModel is not { Series.Count: > 0 })
         {
@@ -123,18 +122,17 @@ public partial class GraphDetailSearchView : UserControl
             ViewModel?.Pan(fractionDelta);
             _lastDragX = pos.X;
 
-            // Vertical drag scrolls the lane stack the same "grab and drag" way — content follows the
-            // cursor, so dragging down reveals lanes above. A no-op when nothing overflows (see
-            // HasVerticalOverflow) since ScrollableHeight is then 0.
+            // 세로 드래그는 같은 "잡고 끄는" 방식으로 레인 묶음을 스크롤한다 — 콘텐츠가 커서를 따라오므로, 아래로
+            // 드래그하면 위쪽 레인이 보인다. 넘치는 것이 없으면(HasVerticalOverflow 참고) ScrollableHeight가 0이라
+            // 아무 일도 일어나지 않는다.
             //
-            // The Y delta MUST be measured against LanesScroll (the fixed viewport frame), not ChartArea —
-            // ChartArea lives inside the vertically-scrolled content, so scrolling it moves it on screen,
-            // which corrupts GetPosition(ChartArea).Y on the very next MouseMove with a synthetic jump that
-            // didn't come from real cursor movement, feeding back into another scroll and so on — this was
-            // the reported violent shaking. Same root-cause class as the tooltip Popup fix elsewhere in
-            // this file's history: never measure a drag delta against an element that moves as a RESULT of
-            // applying that same delta. LanesScroll itself doesn't move when its own content scrolls, so
-            // GetPosition(LanesScroll) stays stable.
+            // Y 변화량은 ChartArea가 아니라 반드시 LanesScroll(고정된 뷰포트 프레임)을 기준으로 재야 한다 —
+            // ChartArea는 세로로 스크롤되는 콘텐츠 안에 있어서 스크롤하면 화면상 위치가 움직이고, 그러면 바로
+            // 다음 MouseMove에서 GetPosition(ChartArea).Y가 실제 커서 이동에서 나온 것이 아닌 합성 점프로 오염되어
+            // 또 다른 스크롤로 되먹임되는 식이 된다 — 이것이 보고된 심한 흔들림이었다. 이 파일의 이력에 있는
+            // 툴팁 Popup 수정과 같은 종류의 원인이다: 드래그 변화량을, 그 변화량을 적용한 결과로 움직이는 요소를
+            // 기준으로 재면 안 된다. LanesScroll 자체는 안쪽 콘텐츠가 스크롤되어도 움직이지 않으므로
+            // GetPosition(LanesScroll)은 안정적이다.
             double posInScrollY = e.GetPosition(LanesScroll).Y;
             double deltaY = posInScrollY - _lastDragY;
             if (deltaY != 0)
@@ -152,10 +150,10 @@ public partial class GraphDetailSearchView : UserControl
         ViewModel?.ClearHover();
     }
 
-    /// <summary>Moves the tooltip to follow the cursor (offset down-right). Popup.HorizontalOffset/
-    /// VerticalOffset reposition its separate top-level window directly — no Measure/clamp dance needed,
-    /// and no risk of the reposition itself perturbing ChartArea's hit-testing (see the Popup comment
-    /// in the XAML for why a plain repositioned Border caused the jumpy/stuck behavior this replaces).</summary>
+    /// <summary>툴팁이 커서를 따라가도록 옮긴다(오른쪽 아래로 오프셋). Popup.HorizontalOffset/VerticalOffset은
+    /// 별도의 최상위 창 위치를 직접 바꾸므로 측정/제한(clamp) 처리가 필요 없고, 위치 변경 자체가
+    /// ChartArea의 히트 테스트를 흔들 위험도 없다(일반 위치 지정 Border가 이것이 대체한 튀거나 멈추는
+    /// 현상을 일으킨 이유는 XAML의 Popup 주석 참고).</summary>
     private void PositionTooltip(Point pos)
     {
         const double offset = 16;

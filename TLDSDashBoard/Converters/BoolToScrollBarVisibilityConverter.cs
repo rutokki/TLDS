@@ -4,11 +4,10 @@ using System.Windows.Data;
 
 namespace TLDSDashBoard.Converters;
 
-/// <summary>Converts a bool to ScrollBarVisibility: Auto when true, Disabled when false. Used so a
-/// ScrollViewer's vertical scrollbar only ever appears once the caller has deliberately zoomed in (e.g.
-/// GraphDetailSearchView's 세로 확대) instead of an "Auto" scrollbar flickering into existence from a
-/// sub-pixel rounding overshoot at the normal fit-one-screen size — that flicker was stealing a few
-/// pixels of width from the Viewbox-stretched charts and visibly resizing them.</summary>
+/// <summary>bool을 ScrollBarVisibility로 변환: true면 Auto, false면 Disabled. 호출한 쪽에서 의도적으로
+/// 확대했을 때(예: GraphDetailSearchView의 세로 확대)만 ScrollViewer의 세로 스크롤바가 나타나게 하려는
+/// 용도다. 기본 한 화면 크기에서 서브픽셀 반올림 오차 때문에 "Auto" 스크롤바가 깜빡 나타나면 Viewbox로
+/// 늘어난 차트의 폭이 몇 픽셀 줄어 차트 크기가 눈에 띄게 바뀌는 문제가 있었다.</summary>
 public sealed class BoolToScrollBarVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

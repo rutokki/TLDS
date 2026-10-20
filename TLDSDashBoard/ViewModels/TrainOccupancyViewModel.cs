@@ -43,8 +43,8 @@ public sealed class TrainOccupancyViewModel : ViewModelBase
         SearchCommand = new RelayCommand(Search);
         ExportCsvCommand = new RelayCommand(ExportCsv);
         PrintCommand = new RelayCommand(() => StatusMessage = "인쇄를 준비 중입니다.");
-        // No auto-search on load (OverView is the only page that renders data by default) — this page
-        // starts empty until the user picks filters and clicks 조회.
+        // 시작 시 자동 조회하지 않는다(기본으로 데이터를 그리는 페이지는 OverView뿐) — 이 페이지는 사용자가
+        // 필터를 고르고 조회를 누를 때까지 비어 있다.
     }
 
     private void ExportCsv()
@@ -70,10 +70,10 @@ public sealed class TrainOccupancyViewModel : ViewModelBase
     private void Search()
     {
         Results.Clear();
-        // No real data source for train occupancy has been identified in the TLDS install yet (the
-        // _file_log/_file_db tables found so far hold telemetry, thresholds and event/alarm logs only —
-        // _file_log's OutValue01(Time,Len,Status BLOB) may be the occupancy/output status, but its format is
-        // undocumented). Sample data is no longer shown, so this page stays empty until that source is wired.
+        // TLDS 설치에서 열차 점유의 실제 데이터 출처가 아직 확인되지 않았다(지금까지 찾은 _file_log/_file_db
+        // 테이블은 텔레메트리, 임계값, 이벤트/알람 로그뿐이다 — _file_log의 OutValue01(Time,Len,Status BLOB)이
+        // 점유/출력 상태일 수 있지만 형식이 문서화되어 있지 않다). 샘플 데이터는 더 이상 보여주지 않으므로,
+        // 그 출처가 연결될 때까지 이 페이지는 비어 있다.
         StatusMessage = "열차점유 실데이터 소스가 아직 연동되지 않았습니다 (TLDS DB에서 점유 기록 테이블 미확인).";
     }
 }

@@ -1,6 +1,6 @@
 namespace TLDSDashBoard.ViewModels.Items;
 
-/// <summary>One day cell in <see cref="TLDSDashBoard.Views.SimpleDatePicker"/>'s month grid.</summary>
+/// <summary><see cref="TLDSDashBoard.Views.SimpleDatePicker"/>의 월 달력 격자에서 하루 칸 하나.</summary>
 public sealed class CalendarDayCell
 {
     public required DateTime Date { get; init; }

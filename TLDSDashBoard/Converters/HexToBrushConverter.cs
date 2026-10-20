@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace TLDSDashBoard.Converters;
 
-/// <summary>Converts a "#RRGGBB"/"#AARRGGBB" hex string into a frozen SolidColorBrush.</summary>
+/// <summary>"#RRGGBB"/"#AARRGGBB" 형식의 16진수 문자열을 고정(frozen)된 SolidColorBrush로 변환한다.</summary>
 public sealed class HexToBrushConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -20,7 +20,7 @@ public sealed class HexToBrushConverter : IValueConverter
             }
             catch
             {
-                // fall through to default
+                // 기본값으로 넘어감
             }
         }
         return Brushes.Gray;

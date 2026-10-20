@@ -6,7 +6,7 @@ using TLDSDashBoard.Models;
 
 namespace TLDSDashBoard.Converters;
 
-/// <summary>Maps an AlarmSeverity to one of the Critical/Warning/Info text or background brushes in Colors.xaml — pass ConverterParameter="Bg" for the background, anything else (or omit it) for the text color.</summary>
+/// <summary>AlarmSeverity를 Colors.xaml의 Critical/Warning/Info 글자색 또는 배경색 브러시 중 하나로 매핑한다 — 배경색은 ConverterParameter="Bg"를 넘기고, 그 외(또는 생략)는 글자색.</summary>
 public sealed class SeverityToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object? parameter, CultureInfo culture)

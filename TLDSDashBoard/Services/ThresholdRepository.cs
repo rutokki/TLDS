@@ -4,25 +4,25 @@ using TLDSDashBoard.Models;
 
 namespace TLDSDashBoard.Services;
 
-/// <summary>One channel's fixed threshold settings — Base(기준)/Caution(주의)/Warning(경고). User-set,
-/// not measured; comes from SetValue.db, distinct from the per-second measured values in _file_log.</summary>
+/// <summary>채널 하나의 고정 임계값 설정 — Base(기준)/Caution(주의)/Warning(경고). 사용자가 설정한 값이지
+/// 측정값이 아니다. SetValue.db에서 오며, _file_log의 초당 측정값과는 별개다.</summary>
 public sealed record ChannelThreshold(double Base, double Caution, double Warning);
 
 /// <summary>
-/// Reads per-device channel thresholds from TLDSDashBoard/_file_db/SetValue.db (table Level01:
-/// Time, ObjectIndex, Type, then (Base_N, Caution_N, Warning_N) for N=0..11 — one row per device,
-/// ObjectIndex matching TrackCircuit.Idx). These are fixed settings the user configured, separate from
-/// the actual measured values RealTelemetryRepository reads from _file_log.
+/// TLDSDashBoard/_file_db/SetValue.db(테이블 Level01: Time, ObjectIndex, Type, 이어서 N=0..11에 대해
+/// (Base_N, Caution_N, Warning_N) — 장치당 한 행, ObjectIndex는 TrackCircuit.Idx와 일치)에서 장치별 채널
+/// 임계값을 읽는다. 사용자가 설정한 고정값이며, RealTelemetryRepository가 _file_log에서 읽는 실제
+/// 측정값과는 별개다.
 ///
-/// Mapped onto the app's existing 표준/측정/점검/최소 (Standard/Measured/Checked/Minimum) 4-value
-/// ChannelMeasurement shape as: Standard=Base, Checked=Caution, Minimum=Warning (Measured always comes
-/// from elsewhere — the live telemetry, not this table). This keeps every existing 궤도장애/레벨기록
-/// column header and layout unchanged rather than renaming everything to Base/Caution/Warning.
+/// 앱에 이미 있던 표준/측정/점검/최소(Standard/Measured/Checked/Minimum) 4값 ChannelMeasurement 형태에
+/// 다음처럼 대응시킨다: Standard=Base, Checked=Caution, Minimum=Warning (Measured는 항상 다른 곳 — 이 테이블이
+/// 아니라 실시간 텔레메트리 — 에서 온다). 이렇게 하면 모든 이름을 Base/Caution/Warning으로 바꾸지 않고도
+/// 기존 궤도장애/레벨기록의 컬럼 헤더와 레이아웃을 그대로 유지할 수 있다.
 /// </summary>
 public static class ThresholdRepository
 {
-    /// <summary>Returns this device's thresholds for the ChannelCatalog channels (same order as Value0..Value5
-    /// in _file_log; SetValue.db has Base/Caution/Warning_0..11 but only the first ChannelCount are used), or null if SetValue.db doesn't exist or has no row for this device.</summary>
+    /// <summary>이 장치의 ChannelCatalog 채널별 임계값을 반환한다(_file_log의 Value0..Value5와 같은 순서; SetValue.db에는
+    /// Base/Caution/Warning_0..11이 있지만 앞쪽 ChannelCount개만 쓴다). SetValue.db가 없거나 이 장치의 행이 없으면 null.</summary>
     public static IReadOnlyList<ChannelThreshold>? LoadForDevice(int objectIndex)
     {
         string path = TldsDataPaths.SetValueDbFile;
@@ -50,9 +50,9 @@ public static class ThresholdRepository
         return result;
     }
 
-    /// <summary>Builds the existing 표준/측정/점검/최소 ChannelMeasurement shape from a real threshold —
-    /// Standard/Checked/Minimum come straight from the setting, Measured is supplied by the caller (the
-    /// real telemetry sample for that moment, or null when _file_log has none — shown blank, never guessed).</summary>
+    /// <summary>실제 임계값으로 기존 표준/측정/점검/최소 ChannelMeasurement 형태를 만든다 —
+    /// 표준/점검/최소는 설정값 그대로이고, 측정값은 호출한 쪽이 넘긴다(그 시점의 실제 텔레메트리 샘플이며,
+    /// _file_log에 없으면 null — 빈칸으로 표시하고 절대 추측하지 않는다).</summary>
     public static ChannelMeasurement ToMeasurement(ChannelThreshold t, double? measured) => new()
     {
         Standard = t.Base,

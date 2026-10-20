@@ -7,10 +7,10 @@
              mc:Ignorable="d">
 
     <UserControl.Resources>
-        <!-- Left label for one lane: color dot + name (top), current/hovered value (middle), id (bottom).
-             Same visual as MetricGroupView's lane label. Height comes from the bound LaneHeight (see
-             code-behind LanesScroll_SizeChanged) instead of a fixed value, so all lanes fit exactly one
-             screen by default and grow together under 세로 확대 (vertical zoom). -->
+        <!-- 레인 하나의 왼쪽 라벨: 색 점 + 이름(위), 현재/호버 값(가운데), id(아래). MetricGroupView의 레인 라벨과
+             시각적으로 같다. 높이는 고정값 대신 바인딩된 LaneHeight에서 오므로(코드비하인드의
+             LanesScroll_SizeChanged 참고) 기본적으로 모든 레인이 한 화면에 딱 맞고, 세로 확대(vertical zoom)
+             때 함께 커진다. -->
         <Style x:Key="DetailLaneLabelStyle" TargetType="Border">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush1}"/>
@@ -18,8 +18,8 @@
             <Setter Property="Padding" Value="6,8"/>
         </Style>
 
-        <!-- Small on/off chip button for the 측정/점검선/세로확대 toggles — checked state picks up the
-             theme's "info" accent so it reads clearly against the dark background. -->
+        <!-- 측정/점검선/세로확대 토글용 작은 켜기/끄기 칩 버튼 — 체크되면 테마의 "info" 강조색을 써서
+             어두운 배경에서 분명히 읽힌다. -->
         <Style x:Key="ToggleChipButton" TargetType="ToggleButton">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
@@ -52,18 +52,18 @@
         </Style>
     </UserControl.Resources>
 
-    <!-- DataContext is overridden here (not on the UserControl root) so a Visibility binding set from
-         outside (against MainViewModel) keeps working — see MetricGroupView for the same pattern.
-         Root is a Grid (Auto filter row + "*" chart-card row), not a page-level ScrollViewer, so the chart
-         card genuinely fills the remaining window height and all lanes can fit one screen by default —
-         see MainWindow.xaml's comment on why pages aren't hosted inside an outer ScrollViewer. -->
+    <!-- DataContext를 UserControl 루트가 아니라 여기서 재정의해서, 바깥(MainViewModel에 대한)에서 지정한
+         Visibility 바인딩이 계속 동작하게 한다 — 같은 패턴은 MetricGroupView 참고.
+         루트는 페이지 전체 ScrollViewer가 아니라 Grid(Auto 필터 행 + "*" 차트 카드 행)이므로, 차트 카드가 남은
+         창 높이를 실제로 채우고 모든 레인이 기본적으로 한 화면에 들어갈 수 있다 — 페이지를 바깥
+         ScrollViewer 안에 두지 않는 이유는 MainWindow.xaml의 주석 참고. -->
     <Grid x:Name="PageRoot" DataContext="{Binding GraphDetailSearch}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Filters (own row) + action button (own row) — see other search pages for why these are split. -->
+        <!-- 필터(한 행) + 동작 버튼(한 행) — 왜 나눴는지는 다른 조회 페이지 참고. -->
         <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,20">
             <StackPanel>
                 <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -97,9 +97,8 @@
                 <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
                     <TextBlock DockPanel.Dock="Left" Text="채널 상세 (주파수 3 · 전압 3, 기본 1시간)" Style="{StaticResource SectionTitle}"/>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <!-- Reset buttons live up here (not at the bottom of the card) because the mouse-
-                             following tooltip Popup constantly covered them down there whenever the cursor
-                             was anywhere near the bottom of the lanes — up here it's clear of the chart area. -->
+                        <!-- 초기화 버튼을 카드 아래쪽이 아니라 여기 둔 이유: 마우스를 따라다니는 툴팁 Popup이 커서가
+                             레인 아래쪽 근처에 있을 때마다 그 자리의 버튼을 계속 가렸기 때문이다 — 여기는 차트 영역에서 떨어져 있다. -->
                         <Button Style="{StaticResource FilterActionButton}" Command="{Binding ResetZoomCommand}" Margin="0,0,6,0">
                             <TextBlock Text="가로 줌 초기화"/>
                         </Button>
@@ -124,11 +123,11 @@
                         <Rectangle Width="14" Height="2" Fill="{StaticResource MinimumLineBrush}" VerticalAlignment="Center"/>
                         <TextBlock Text="최소" Style="{StaticResource LegendText}" Margin="5,0,0,0"/>
                     </StackPanel>
-                    <!-- Usage hint moved out of the crowded toolbar row into the bottom row (next to RangeLabel). -->
+                    <!-- 사용 안내 문구를 붐비는 도구 모음 줄에서 아래쪽 줄(RangeLabel 옆)로 옮겼다. -->
                 </DockPanel>
 
-                <!-- Empty state: this page intentionally starts blank (no auto-search, no mock fallback),
-                     so say so instead of showing an empty card. Hidden as soon as a 조회 returns lanes. -->
+                <!-- 빈 상태: 이 페이지는 일부러 비어 있게 시작하므로(자동 조회 없음, 목 폴백 없음) 빈 카드를 보여주는
+                     대신 그렇다고 알려준다. 조회로 레인이 반환되면 바로 숨겨진다. -->
                 <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
                             Visibility="{Binding Series.Count, Converter={StaticResource ZeroToVisibilityConverter}}">
                     <TextBlock Style="{StaticResource EmptyStateText}" Text="기간과 장치를 선택한 뒤 [조회]를 눌러주세요."/>
@@ -136,9 +135,9 @@
                                Text="실측 데이터(_file_log)가 있는 구간만 표시되며, 샘플 데이터로 대체하지 않습니다."/>
                 </StackPanel>
 
-                <!-- The lanes fill this row exactly (LaneHeight = row height / channel count) with no scrolling needed
-                     by default; 세로 확대 grows LaneHeight beyond that, and this ScrollViewer is what lets
-                     the now-taller-than-viewport stack actually be scrolled to. -->
+                <!-- 레인이 이 행을 정확히 채우며(LaneHeight = 행 높이 / 채널 수) 기본적으로 스크롤이 필요 없다.
+                     세로 확대는 LaneHeight를 그 이상으로 키우며, 이 ScrollViewer가 뷰포트보다 커진 레인 묶음을
+                     실제로 스크롤할 수 있게 해준다. -->
                 <ScrollViewer Grid.Row="1" x:Name="LanesScroll"
                               VerticalScrollBarVisibility="{Binding HasVerticalOverflow, Converter={StaticResource BoolToScrollBarVisibilityConverter}}"
                               HorizontalScrollBarVisibility="Disabled" SizeChanged="LanesScroll_SizeChanged">
@@ -148,7 +147,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Left: name / current-or-hovered value / id, one row per channel -->
+                        <!-- 왼쪽: 이름 / 현재 또는 호버 값 / id, 채널당 한 행 -->
                         <ItemsControl Grid.Column="0" ItemsSource="{Binding Series}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -182,7 +181,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Right: one chart per channel, stacked, each with its own top(max)/bottom(min) axis labels -->
+                        <!-- 오른쪽: 채널당 차트 하나를 쌓아서, 각각 자신의 위(최대)/아래(최소) 축 라벨을 가진다 -->
                         <Grid Grid.Column="1">
                             <ItemsControl ItemsSource="{Binding Series}">
                                 <ItemsControl.ItemsPanel>
@@ -221,9 +220,8 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Shared overlay: transparent so it captures the mouse across the whole stack,
-                                 stretches to the same size as the ItemsControl above it (same Grid cell).
-                                 Unlike MetricGroupView's hover-only overlay, this one also drives zoom/pan. -->
+                            <!-- 공유 오버레이: 투명해서 쌓인 전체에 걸쳐 마우스를 받으며, 위의 ItemsControl과 같은 크기로
+                                 늘어난다(같은 Grid 셀). MetricGroupView의 호버 전용 오버레이와 달리 이것은 줌/팬도 구동한다. -->
                             <Grid x:Name="ChartArea" Background="Transparent" Cursor="SizeWE"
                                   MouseMove="ChartArea_MouseMove" MouseLeave="ChartArea_MouseLeave"
                                   MouseWheel="ChartArea_MouseWheel"
@@ -232,14 +230,12 @@
                                 <Line x:Name="CrosshairLine" Y1="0" Stroke="White"
                                       StrokeThickness="1" StrokeDashArray="3,2" Visibility="Collapsed" IsHitTestVisible="False"/>
 
-                                <!-- Mouse-following tooltip, implemented as a Popup (its own top-level window layer)
-                                     instead of a plain positioned Border: a Border repositioned via Margin sits in
-                                     the SAME visual tree ChartArea is hit-testing against, so moving it under a
-                                     stationary cursor could itself trigger WPF's synthetic mouse-move re-evaluation
-                                     and fight the next real MouseMove, producing exactly the jumpy/stuck behavior
-                                     seen when that was tried. A Popup renders outside that tree, so repositioning
-                                     it via HorizontalOffset/VerticalOffset in code-behind can't feed back into
-                                     hit-testing. -->
+                                <!-- 마우스를 따라다니는 툴팁을 일반 위치 지정 Border 대신 Popup(자체 최상위 창 레이어)으로 구현했다:
+                                     Margin으로 옮기는 Border는 ChartArea가 히트 테스트하는 바로 그 비주얼 트리 안에 있으므로, 정지한
+                                     커서 아래에서 옮기면 그 자체가 WPF의 합성 마우스 이동 재평가를 일으켜 다음 실제 MouseMove와
+                                     충돌하고, 그것을 시도했을 때 바로 그 튀거나 멈추는 현상이 나타났다. Popup은 그 트리 밖에서
+                                     그려지므로, 코드비하인드에서 HorizontalOffset/VerticalOffset으로 위치를 바꿔도 히트 테스트에
+                                     되먹임될 수 없다. -->
                                 <Popup x:Name="HoverTooltip" Placement="Relative" AllowsTransparency="True"
                                        IsHitTestVisible="False" Focusable="False" StaysOpen="True">
                                     <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
@@ -271,7 +267,7 @@
                     </Grid>
                 </ScrollViewer>
 
-                <!-- Shared time axis, indented to align under the chart column -->
+                <!-- 공유 시간축, 차트 컬럼 아래에 맞도록 들여씀 -->
                 <Grid Grid.Row="2" Margin="120,4,0,0">
                     <TextBlock Text="{Binding TimeStartLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
                                Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Left"/>
@@ -281,8 +277,8 @@
                                Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
                 </Grid>
 
-                <!-- Bottom row: displayed range (left) + window size chip and usage hint (right). The window
-                     chip used to float over the top-right corner of the chart, covering lane 1's max-axis label. -->
+                <!-- 아래 행: 표시 중인 범위(왼쪽) + 창 크기 칩과 사용 안내(오른쪽). 창 크기 칩은 예전에 차트 오른쪽 위
+                     모서리에 떠 있어서 레인 1의 최대 축 라벨을 가렸다. -->
                 <DockPanel Grid.Row="3" LastChildFill="False" Margin="120,10,0,0">
                     <TextBlock DockPanel.Dock="Left" Text="{Binding RangeLabel}" FontSize="11" Foreground="{StaticResource TextDimBrush}"
                                VerticalAlignment="Center"/>

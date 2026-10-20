@@ -6,15 +6,15 @@
              xmlns:views="clr-namespace:TLDSDashBoard.Views"
              mc:Ignorable="d">
 
-    <!-- DataContext is overridden here (not on the UserControl root) so a Visibility binding set from
-         outside (against MainViewModel) keeps working — see MetricGroupView for the same pattern. -->
+    <!-- DataContext를 UserControl 루트가 아니라 여기서 재정의해서, 바깥(MainViewModel에 대한)에서 지정한
+         Visibility 바인딩이 계속 동작하게 한다 — 같은 패턴은 MetricGroupView 참고. -->
     <Grid DataContext="{Binding LevelRecordList}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Filter bar -->
+        <!-- 필터 바 -->
         <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,16">
             <StackPanel>
                 <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -92,9 +92,8 @@
     <ColumnDefinition Width="80"/>
     <ColumnDefinition Width="80"/>
     <ColumnDefinition Width="80"/>
-    <!-- Spacer = DataGrid vertical scrollbar width (Styles.xaml ScrollBar Width=10): without it the header's
-         scrollable width is 10px shorter than the grid's, so at the far right the header stops early and
-         drifts out of line with the columns below. -->
+    <!-- 스페이서 = DataGrid 세로 스크롤바 폭(Styles.xaml ScrollBar Width=10): 없으면 헤더의 스크롤 가능한 폭이
+         그리드보다 10px 짧아서, 맨 오른쪽에서 헤더가 일찍 멈추고 아래 컬럼과 어긋나게 된다. -->
     <ColumnDefinition Width="10"/>
 </Grid.ColumnDefinitions>
 
@@ -154,14 +153,14 @@
                         <DataGrid.Columns>
 <DataGridTextColumn Binding="{Binding TrackName}" Width="120"/>
 <DataGridTextColumn Binding="{Binding TimeLabel}" Width="90"/>
-<DataGridTextColumn Binding="{Binding TRK_FREQ.Standard, StringFormat=F2}" Width="80"/>
-<DataGridTextColumn Binding="{Binding TRK_FREQ.Measured, StringFormat=F2}" Width="80"/>
-<DataGridTextColumn Binding="{Binding TRK_FREQ.Checked, StringFormat=F2}" Width="80"/>
-<DataGridTextColumn Binding="{Binding TRK_FREQ.Minimum, StringFormat=F2}" Width="80"/>
-<DataGridTextColumn Binding="{Binding CAB_FREQ.Standard, StringFormat=F2}" Width="80"/>
-<DataGridTextColumn Binding="{Binding CAB_FREQ.Measured, StringFormat=F2}" Width="80"/>
-<DataGridTextColumn Binding="{Binding CAB_FREQ.Checked, StringFormat=F2}" Width="80"/>
-<DataGridTextColumn Binding="{Binding CAB_FREQ.Minimum, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Standard, StringFormat=F0}" Width="80"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Measured, StringFormat=F0}" Width="80"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Checked, StringFormat=F0}" Width="80"/>
+<DataGridTextColumn Binding="{Binding TRK_FREQ.Minimum, StringFormat=F0}" Width="80"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Standard, StringFormat=F0}" Width="80"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Measured, StringFormat=F0}" Width="80"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Checked, StringFormat=F0}" Width="80"/>
+<DataGridTextColumn Binding="{Binding CAB_FREQ.Minimum, StringFormat=F0}" Width="80"/>
 <DataGridTextColumn Binding="{Binding CODE_FREQ.Standard, StringFormat=F2}" Width="80"/>
 <DataGridTextColumn Binding="{Binding CODE_FREQ.Measured, StringFormat=F2}" Width="80"/>
 <DataGridTextColumn Binding="{Binding CODE_FREQ.Checked, StringFormat=F2}" Width="80"/>
@@ -170,14 +169,14 @@
 <DataGridTextColumn Binding="{Binding TX_VOLTAGE.Measured, StringFormat=F1}" Width="80"/>
 <DataGridTextColumn Binding="{Binding TX_VOLTAGE.Checked, StringFormat=F1}" Width="80"/>
 <DataGridTextColumn Binding="{Binding TX_VOLTAGE.Minimum, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Standard, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Measured, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Checked, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Minimum, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Standard, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Measured, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Checked, StringFormat=F1}" Width="80"/>
-<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Minimum, StringFormat=F1}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Standard, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Measured, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Checked, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_A_VOLTAGE.Minimum, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Standard, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Measured, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Checked, StringFormat=F2}" Width="80"/>
+<DataGridTextColumn Binding="{Binding RX_B_VOLTAGE.Minimum, StringFormat=F2}" Width="80"/>
                         </DataGrid.Columns>
                 </DataGrid>
 

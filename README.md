@@ -34,6 +34,8 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 ## 파일 구조
 
+> 각 .cs 파일의 동작 방식·주요 메서드·자주 바꾸는 값 위치는 [`TLDSDashBoard/기능_변수_정리.md`](TLDSDashBoard/기능_변수_정리.md)에 자세히 정리되어 있습니다.
+
 ### 루트
 
 | 파일 | 역할 |

@@ -9,22 +9,22 @@ public sealed record EventLogRow(DateTime Time, int DeviceType, string DeviceNam
 public sealed record AlarmLogRow(DateTime GeneratedAt, DateTime? RestoredAt, string DeviceName, string Content, int Major, int Minor);
 
 /// <summary>
-/// Reads the real event/alarm log at TLDSDashBoard/_file_db/Event-{yyyy-MM-dd}.db (one file per day):
+/// 실제 이벤트/알람 로그 TLDSDashBoard/_file_db/Event-{yyyy-MM-dd}.db(하루 파일 하나)를 읽는다:
 ///   Event (TIME, SUB_SECTION, EVENT_NUM, DEVICE_TYPE, DEVICE_NAME char20, CONTENTS char20)
 ///   Alarm (GENERATE_TIME, SUB_SECTION, GENERATE, EVENT_NUM, DEVICE_TYPE, MAJOR, MINOR, WC,
 ///          DEVICE_NAME char20, CONTENTS char20, SUB_TEXT char4, RESTORE_TIME)
 ///
-/// DEVICE_NAME/CONTENTS are stored as raw CP949 (Korean codepage 949) bytes, not UTF-8 — reading them
-/// as SQLite TEXT directly (as Microsoft.Data.Sqlite would by default) mangles them, since .NET assumes
-/// UTF-8 for TEXT columns. Both are re-read as BLOB and decoded with CP949 explicitly instead.
+/// DEVICE_NAME/CONTENTS는 UTF-8이 아니라 원시 CP949(한국어 코드페이지 949) 바이트로 저장되어 있다 —
+/// SQLite TEXT로 그대로 읽으면(Microsoft.Data.Sqlite의 기본 동작) .NET이 TEXT 컬럼을 UTF-8로 가정하기
+/// 때문에 글자가 깨진다. 그래서 두 컬럼은 BLOB으로 다시 읽어 CP949로 명시적으로 디코딩한다.
 /// </summary>
 public static class EventLogRepository
 {
     private static readonly Encoding Cp949 = Encoding.GetEncoding(949);
 
-    /// <summary>Loads every Event row on the given day. Returns an empty list (not an exception) if that
-    /// day's file doesn't exist, since "no events that day" and "no log file for that day" look the same
-    /// to a caller doing a date-range scan across several days.</summary>
+    /// <summary>주어진 날짜의 Event 행을 전부 읽는다. 그 날 파일이 없으면 예외 대신 빈 리스트를 반환한다 —
+    /// 여러 날에 걸친 기간 검색을 하는 호출자에게 "그 날 이벤트 없음"과 "그 날 로그 파일 없음"은
+    /// 똑같이 보이기 때문이다.</summary>
     public static List<EventLogRow> LoadEvents(DateTime day)
     {
         string path = TldsDataPaths.EventDbFile(day);
@@ -49,7 +49,7 @@ public static class EventLogRepository
         return rows;
     }
 
-    /// <summary>Loads every Alarm row on the given day. Same empty-list-on-missing-file behavior as <see cref="LoadEvents"/>.</summary>
+    /// <summary>주어진 날짜의 Alarm 행을 전부 읽는다. 파일이 없으면 빈 리스트를 반환하는 동작은 <see cref="LoadEvents"/>와 같다.</summary>
     public static List<AlarmLogRow> LoadAlarms(DateTime day)
     {
         string path = TldsDataPaths.EventDbFile(day);

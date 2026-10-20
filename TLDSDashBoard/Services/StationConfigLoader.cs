@@ -5,28 +5,30 @@ using TLDSDashBoard.Models;
 
 namespace TLDSDashBoard.Services;
 
-/// <summary>Everything read from _file_system for the configured station(s).</summary>
+/// <summary>설정된 역(들)에 대해 _file_system에서 읽은 모든 것.</summary>
 public sealed record StationConfig(
     IReadOnlyList<Station> Stations,
     IReadOnlyList<TrackCircuit> Tracks,
     IReadOnlyList<string> LeuDevices,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    IReadOnlyList<string> Signals,
+    IReadOnlyList<string> Switches);
 
 /// <summary>
-/// Reads the TLDS install's own station configuration the same way TLDS.exe does:
-///   1. _file_system/system.xml — &lt;section&gt;&lt;station_no&gt;&lt;match number=".." name=".."/&gt; lists the
-///      station(s) this install serves (falls back to &lt;menu&gt;&lt;section name=".."/&gt; if absent).
-///   2. _file_system/index_{역이름}.xml — &lt;track&gt;&lt;contents index name type level_type/&gt; = the 궤도회로
-///      list; `index` is the DB device number (_file_log Idx / SetValue.db ObjectIndex). &lt;input&gt;
-///      DICARD entries = LEU 입력카드.
+/// TLDS.exe와 같은 방식으로 TLDS 설치 자체의 역 설정을 읽는다:
+///   1. _file_system/system.xml — &lt;section&gt;&lt;station_no&gt;&lt;match number=".." name=".."/&gt;가 이 설치가
+///      담당하는 역(들)을 나열한다(없으면 &lt;menu&gt;&lt;section name=".."/&gt;로 폴백).
+///   2. _file_system/index_{역이름}.xml — &lt;track&gt;&lt;contents index name type level_type/&gt; = 궤도회로
+///      목록; `index`는 DB 장치 번호(_file_log Idx / SetValue.db ObjectIndex)다. &lt;input&gt;
+///      DICARD 항목 = LEU 입력카드.
 ///   3. _file_system/rack_{역이름}.xml — &lt;Rack&gt;&lt;sub type="impulse" name rack_no&gt;&lt;card slot&gt;&lt;track name/&gt;
-///      = which impulse rack/slot each track is wired to (optional; tracks without a rack entry just
-///      have no rack info).
-/// So whichever station system.xml names is what the dashboard shows — other index_*.xml files lying in
-/// the folder are ignored, exactly like TLDS.exe.
+///      = 각 궤도가 어느 임펄스 랙/슬롯에 배선되어 있는지(선택 사항; 랙 항목이 없는 궤도는 랙 정보만
+///      없을 뿐이다).
+/// 따라서 system.xml이 지정한 역이 대시보드에 표시되는 역이다 — 폴더에 있는 다른 index_*.xml 파일은
+/// TLDS.exe와 똑같이 무시된다.
 ///
-/// The files carry no encoding declaration and are saved as CP949 (Korean ANSI), not UTF-8 — they are
-/// read as bytes and decoded explicitly (UTF-8 only when a BOM or strictly valid UTF-8 says so).
+/// 파일에는 인코딩 선언이 없고 UTF-8이 아니라 CP949(한국어 ANSI)로 저장되어 있다 — 바이트로 읽어
+/// 명시적으로 디코딩한다(BOM이 있거나 엄격히 유효한 UTF-8일 때만 UTF-8로 본다).
 /// </summary>
 public static class StationConfigLoader
 {
@@ -55,6 +57,8 @@ public static class StationConfigLoader
 
         var tracks = new List<TrackCircuit>();
         var leus = new List<string>();
+        var signals = new List<string>();
+        var switches = new List<string>();
         foreach (var station in stations)
         {
             string indexPath = Path.Combine(TldsDataPaths.FileSystemRoot, $"index_{station.Name}.xml");
@@ -90,6 +94,11 @@ public static class StationConfigLoader
                 .Where(c => Attr(c, "type") == "DICARD")
                 .Select(c => Attr(c, "name")));
 
+            // 신호기 = <signal><contents name>, 선로전환기 = <point><contents name> (names only — no DB index
+            // is needed, they're just labels for the 시간별 상태 출력 신호설비 이벤트 device pickers).
+            signals.AddRange(index.Root!.Elements("signal").Elements("contents").Select(c => Attr(c, "name")).Where(n => n.Length > 0));
+            switches.AddRange(index.Root!.Elements("point").Elements("contents").Select(c => Attr(c, "name")).Where(n => n.Length > 0));
+
             var stationTrackNames = tracks.Skip(before).Select(t => t.Name).ToHashSet();
             var rackOnly = racks.Keys.Where(n => !stationTrackNames.Contains(n)).ToList();
             if (rackOnly.Count > 0)
@@ -100,7 +109,8 @@ public static class StationConfigLoader
             throw new InvalidDataException(
                 $"궤도 정보를 읽지 못했습니다 ({string.Join(" / ", warnings)}). 경로: {TldsDataPaths.FileSystemRoot}");
 
-        return new StationConfig(stations, tracks.OrderBy(t => t.StationId).ThenBy(t => t.Idx).ToList(), leus, warnings);
+        return new StationConfig(stations, tracks.OrderBy(t => t.StationId).ThenBy(t => t.Idx).ToList(), leus, warnings,
+            signals.Distinct().ToList(), switches.Distinct().ToList());
     }
 
     private sealed record RackSlot(string RackName, int? RackNo, int? Slot);
@@ -142,9 +152,9 @@ public static class StationConfigLoader
             try { text = new UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes); }
             catch (DecoderFallbackException) { text = Encoding.GetEncoding(949).GetString(bytes); }
         }
-        // Field config files contain comments that aren't well-formed XML (e.g. rack_쌍룡.xml's
-        // <!--sub type="di" sub_type="---" ...--> — "--" inside a comment), which TLDS.exe's own parser
-        // tolerates but XDocument rejects. Comments carry nothing we read, so strip them before parsing.
+        // 현장 설정 파일에는 올바른 XML이 아닌 주석이 있다(예: rack_쌍룡.xml의
+        // <!--sub type="di" sub_type="---" ...--> — 주석 안에 "--"). TLDS.exe 자체 파서는 이를 허용하지만
+        // XDocument는 거부한다. 주석에는 우리가 읽는 내용이 없으므로, 파싱 전에 제거한다.
         text = System.Text.RegularExpressions.Regex.Replace(text, "<!--.*?-->", "",
             System.Text.RegularExpressions.RegexOptions.Singleline);
         try { return XDocument.Parse(text); }

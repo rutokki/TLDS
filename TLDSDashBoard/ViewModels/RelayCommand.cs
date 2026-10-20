@@ -2,7 +2,7 @@ using System.Windows.Input;
 
 namespace TLDSDashBoard.ViewModels;
 
-/// <summary>Simple ICommand implementation for MVVM command bindings.</summary>
+/// <summary>MVVM 커맨드 바인딩을 위한 단순한 ICommand 구현.</summary>
 public sealed class RelayCommand : ICommand
 {
     private readonly Action<object?> _execute;

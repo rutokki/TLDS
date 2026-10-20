@@ -7,11 +7,11 @@ using TLDSDashBoard.ViewModels.Items;
 namespace TLDSDashBoard.Views;
 
 /// <summary>
-/// A self-contained date picker: hand-drawn month grid in a Popup, styled entirely with our own dark-theme
-/// brushes. Exists because WPF's built-in Calendar control (used internally by DatePicker) resisted every
-/// styling approach we tried — implicit Style, CalendarDayButtonStyle/CalendarButtonStyle, CalendarItem
-/// Style — and kept rendering with its default light theme regardless. Building the grid ourselves removes
-/// all ambiguity about which control actually owns which pixel.
+/// 직접 그린 월 달력 격자를 Popup 안에 둔, 독립적으로 동작하는 날짜 선택기로, 우리 어두운 테마 브러시로만 꾸민다.
+/// WPF 기본 Calendar 컨트롤(DatePicker가 내부적으로 씀)이 우리가 시도한 모든 스타일링 방법 — 암시적
+/// Style, CalendarDayButtonStyle/CalendarButtonStyle, CalendarItem Style — 에 저항하며 무엇을 해도 기본
+/// 밝은 테마로 그려졌기 때문에 만들었다. 격자를 직접 만들면 어느 컨트롤이 어느 픽셀을 소유하는지에 대한
+/// 모호함이 모두 사라진다.
 /// </summary>
 public partial class SimpleDatePicker : UserControl
 {

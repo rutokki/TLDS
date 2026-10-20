@@ -4,7 +4,7 @@ using System.Windows.Data;
 
 namespace TLDSDashBoard.Converters;
 
-/// <summary>Converts a bool to FontWeight: SemiBold when true, Normal when false.</summary>
+/// <summary>bool을 FontWeight로 변환: true면 SemiBold, false면 Normal.</summary>
 public sealed class BoldWhenTrueConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

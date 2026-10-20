@@ -7,14 +7,14 @@
              mc:Ignorable="d" d:DesignHeight="600">
 
     <UserControl.Resources>
-        <!-- Left label for one lane: color dot + name (top), big current/hovered value (middle), id (bottom).
-             Click opens the drill-in modal for that one channel (its own full-history chart + min/max/avg). -->
+        <!-- 레인 하나의 왼쪽 라벨: 색 점 + 이름(위), 큰 현재/호버 값(가운데), id(아래).
+             클릭하면 그 채널의 드릴인 모달(자체 전체 이력 차트 + 최소/최대/평균)이 열린다. -->
         <Style x:Key="LaneLabelButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <!-- Must match the lane chart Border's Height on the right (and ChartMetrics.LaneChartH) so the two columns' rows line up. -->
+            <!-- 오른쪽 레인 차트 Border의 Height(그리고 ChartMetrics.LaneChartH)와 일치해야 두 컬럼의 행이 정렬된다. -->
             <Setter Property="Height" Value="90"/>
             <Setter Property="Command" Value="{Binding DataContext.OpenDrillCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
             <Setter Property="CommandParameter" Value="{Binding Id}"/>
@@ -74,16 +74,16 @@
                 BorderThickness="1" CornerRadius="10" Padding="16,14">
             <StackPanel>
 
-                <!-- One stacked lane per channel — each with its OWN real value axis (not normalized/overlaid,
-                     since units differ: V/A/Hz/ms). A single crosshair + hover-time chip spans the whole stack
-                     (see ChartArea_MouseMove/Leave in code-behind), updating every lane's value together. -->
+                <!-- 채널당 쌓인 레인 하나 — 각각 자신의 실제 값 축을 가진다(정규화/겹침 아님, 단위가
+                     V/A/Hz/ms로 다르기 때문). 크로스헤어 하나와 호버 시각 칩 하나가 쌓인 전체에 걸쳐 있으며
+                     (코드비하인드의 ChartArea_MouseMove/Leave 참고) 모든 레인의 값을 함께 갱신한다. -->
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Left: name / current-or-hovered value / id, one row per channel -->
+                    <!-- 왼쪽: 이름 / 현재 또는 호버 값 / id, 채널당 한 행 -->
                     <ItemsControl Grid.Column="0" ItemsSource="{Binding Data.Series}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -97,7 +97,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- Right: one mini-chart per channel, stacked, each with its own top(max)/bottom(min) axis labels -->
+                    <!-- 오른쪽: 채널당 미니 차트 하나를 쌓아서, 각각 자신의 위(최대)/아래(최소) 축 라벨을 가진다 -->
                     <Grid Grid.Column="1">
                         <ItemsControl ItemsSource="{Binding Data.Series}">
                             <ItemsControl.ItemsPanel>
@@ -132,20 +132,19 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Shared hover overlay: transparent so it captures the mouse across the whole stack,
-                             stretches to the same size as the ItemsControl above it (same Grid cell). -->
+                        <!-- 공유 호버 오버레이: 투명해서 쌓인 전체에 걸쳐 마우스를 받으며, 위의 ItemsControl과 같은 크기로
+                             늘어난다(같은 Grid 셀). -->
                         <Grid x:Name="ChartArea" Background="Transparent"
                               MouseMove="ChartArea_MouseMove" MouseLeave="ChartArea_MouseLeave">
                             <Line x:Name="CrosshairLine" Y1="0" Stroke="White"
                                   StrokeThickness="1" StrokeDashArray="3,2" Visibility="Collapsed" IsHitTestVisible="False"/>
 
-                            <!-- Mouse-following tooltip, implemented as a Popup (its own top-level window layer)
-                                 instead of a plain positioned Border: a Border repositioned via Margin sits in the
-                                 SAME visual tree ChartArea is hit-testing against, so moving it under a stationary
-                                 cursor could itself trigger WPF's synthetic mouse-move re-evaluation and fight the
-                                 next real MouseMove, producing exactly the jumpy/stuck behavior seen when that was
-                                 tried. A Popup renders outside that tree, so repositioning it via
-                                 HorizontalOffset/VerticalOffset in code-behind can't feed back into hit-testing. -->
+                            <!-- 마우스를 따라다니는 툴팁을 일반 위치 지정 Border 대신 Popup(자체 최상위 창 레이어)으로 구현했다:
+                                 Margin으로 옮기는 Border는 ChartArea가 히트 테스트하는 바로 그 비주얼 트리 안에 있으므로, 정지한
+                                 커서 아래에서 옮기면 그 자체가 WPF의 합성 마우스 이동 재평가를 일으켜 다음 실제 MouseMove와
+                                 충돌하고, 그것을 시도했을 때 바로 그 튀거나 멈추는 현상이 나타났다. Popup은 그 트리 밖에서
+                                 그려지므로, 코드비하인드에서 HorizontalOffset/VerticalOffset으로 위치를 바꿔도 히트 테스트에
+                                 되먹임될 수 없다. -->
                             <Popup x:Name="HoverTooltip" Placement="Relative" AllowsTransparency="True"
                                    IsHitTestVisible="False" Focusable="False" StaysOpen="True">
                                 <Border Background="{StaticResource PanelHoverBgBrush}" BorderBrush="{StaticResource BorderLightBrush}"
@@ -176,7 +175,7 @@
                     </Grid>
                 </Grid>
 
-                <!-- Shared time axis, indented to align under the chart column -->
+                <!-- 공유 시간축, 차트 컬럼 아래에 맞도록 들여씀 -->
                 <Grid Margin="120,4,0,0">
                     <TextBlock Text="{Binding Data.TimeStartLabel}" FontSize="9.5" FontFamily="{StaticResource MonoFont}"
                                Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Left"/>

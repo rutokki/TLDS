@@ -10,8 +10,8 @@ public sealed class HourlyStatusCategoryGroup
     public required string Label { get; init; }
     public ObservableCollection<HourlyStatusEventRecord> Rows { get; } = new();
 
-    /// <summary>This category's own condition checkboxes — shown in place of the others' when this group
-    /// is <see cref="HourlyStatusViewModel.SelectedGroup"/>. Placeholder items for now (see
-    /// HourlyStatusViewModel.BuildConditionOptions); real per-category conditions are still TBD.</summary>
+    /// <summary>이 카테고리 고유의 조건 체크박스 — 이 그룹이 <see cref="HourlyStatusViewModel.SelectedGroup"/>일 때
+    /// 다른 카테고리 것 대신 표시된다. 카테고리별 항목과 키워드는 HourlyStatusViewModel.ConditionDefs에
+    /// 정의되어 있다.</summary>
     public required ObservableCollection<HourlyStatusConditionOption> ConditionOptions { get; init; }
 }

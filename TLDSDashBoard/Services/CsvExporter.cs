@@ -7,18 +7,17 @@ using TLDSDashBoard.Models;
 
 namespace TLDSDashBoard.Services;
 
-/// <summary>Shared "CSV 저장" implementation for every page's export button — shows a native Save dialog,
-/// writes UTF-8 with a BOM (without it, Excel opens Korean text as garbled), and quotes/escapes any
-/// field containing a comma, quote, or newline.</summary>
+/// <summary>모든 페이지의 "CSV 저장" 버튼이 공유하는 구현 — 기본 저장 대화상자를 띄우고,
+/// BOM이 있는 UTF-8로 쓰며(없으면 Excel이 한글을 깨진 글자로 연다), 쉼표/따옴표/줄바꿈이 들어간
+/// 필드는 따옴표로 감싸 이스케이프한다.</summary>
 public static class CsvExporter
 {
     public static readonly string[] MeasurementSuffixes = { "표준", "측정", "점검", "최소" };
 
-    /// <summary>Shows a Save dialog and writes the header + rows as CSV. Returns null if the user
-    /// canceled the dialog, or if the write failed (e.g. the file is already open in Excel) — either way
-    /// callers should leave their status message alone rather than claim success. A failed write shows
-    /// its own message box here (same place the Save dialog itself lives) instead of throwing, since an
-    /// unhandled IOException from a locked file would otherwise crash the app.</summary>
+    /// <summary>저장 대화상자를 띄우고 헤더 + 행을 CSV로 쓴다. 사용자가 대화상자를 취소했거나 쓰기가
+    /// 실패했으면(예: Excel에서 이미 파일을 열어 둠) null을 반환한다 — 어느 쪽이든 호출한 쪽은 성공했다고
+    /// 알리지 말고 상태 메시지를 그대로 둬야 한다. 쓰기 실패는 예외를 던지는 대신 여기서(저장 대화상자와
+    /// 같은 곳) 자체 메시지 상자를 띄운다. 잠긴 파일의 IOException을 처리하지 않으면 앱이 죽기 때문이다.</summary>
     public static string? Export(string suggestedFileName, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows)
     {
         var dialog = new SaveFileDialog
@@ -55,9 +54,8 @@ public static class CsvExporter
         }
     }
 
-    /// <summary>Standard/Measured/Checked/Minimum as 4 CSV fields, in the same order as
-    /// <see cref="MeasurementSuffixes"/> — the recurring 표준/측정/점검/최소 group used throughout the
-    /// 궤도 장애·경보 and 레벨 기록 grids.</summary>
+    /// <summary>표준/측정/점검/최소를 CSV 필드 4개로, <see cref="MeasurementSuffixes"/>와 같은 순서로 —
+    /// 궤도 장애·경보와 레벨 기록 그리드 전반에 반복되는 표준/측정/점검/최소 묶음.</summary>
     public static IEnumerable<string> FlattenChannel(ChannelMeasurement c)
     {
         return new[]

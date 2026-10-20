@@ -65,14 +65,14 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Logo block -->
+            <!-- 로고 블록 -->
             <StackPanel Grid.Row="0">
                 <TextBlock Text="TLDS" FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="Bold"
                            Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="궤도회로 모니터링 시스템" FontSize="11" Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
+                <TextBlock Text="모니터링 시스템" FontSize="11" Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
             </StackPanel>
 
-            <!-- Nav list -->
+            <!-- 내비게이션 목록 -->
             <ItemsControl Grid.Row="2" ItemsSource="{Binding NavItems}" VerticalAlignment="Top">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -86,9 +86,9 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- Footer: data-link status — green "실데이터 연동" when OverView could read the real _file_log,
-                 amber "샘플 데이터" when it fell back to generated data (used to be a hardcoded green
-                 "System Nominal" that stayed green even while showing sample data). -->
+            <!-- 푸터: 데이터 연결 상태 — OverView가 실제 _file_log를 읽을 수 있으면 초록색 "실데이터 연동",
+                 생성된 데이터로 폴백했으면 주황색 "샘플 데이터"(예전에는 샘플 데이터를 보여주는 중에도 초록색으로
+                 남아 있던 하드코딩된 "System Nominal"이었다). -->
             <Border Grid.Row="3" BorderBrush="{StaticResource BorderBrush1}" BorderThickness="0,1,0,0" Padding="0,16,0,0"
                     ToolTip="{Binding DataSourceDetail}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">

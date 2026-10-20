@@ -1,9 +1,8 @@
 namespace TLDSDashBoard.Models;
 
 /// <summary>
-/// One row of the 궤도 장애 및 경보 리스트 (track fault &amp; alarm list): a fault event on one track
-/// circuit, plus the full 6-channel (주파수 3 + 전압 3) measurement snapshot (표준/측정/점검/최소 each) taken at
-/// that event — mirrors the same 6 channels as <see cref="ChannelDataSet"/>.
+/// 궤도 장애 및 경보 리스트의 한 행: 한 궤도회로의 장애 이벤트와, 그 시점에 취한 6채널(주파수 3 + 전압 3)
+/// 전체 측정 스냅샷(각각 표준/측정/점검/최소) — <see cref="ChannelDataSet"/>과 같은 6채널을 따른다.
 /// </summary>
 public sealed class TrackFaultRecord
 {

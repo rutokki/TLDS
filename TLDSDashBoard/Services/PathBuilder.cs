@@ -4,10 +4,10 @@ using System.Text;
 namespace TLDSDashBoard.Services;
 
 /// <summary>
-/// Builds a WPF Path "M x,y L x,y ..." mini-language string from a data array, the same way the
-/// original HTML prototype turns a sample array into an SVG path `d` attribute. Because WPF's path
-/// markup syntax is a superset compatible with SVG's M/L commands, the resulting string can be
-/// assigned directly to a &lt;Path Data="..."/&gt; (via a StreamGeometry/Geometry converter).
+/// 데이터 배열로 WPF Path의 "M x,y L x,y ..." 미니 언어 문자열을 만든다. 원래 HTML 프로토타입이 샘플
+/// 배열을 SVG path의 `d` 속성으로 바꾸는 방식과 같다. WPF의 경로 마크업 구문이 SVG의 M/L 명령과
+/// 호환되는 상위 집합이므로, 결과 문자열을 &lt;Path Data="..."/&gt;에 (StreamGeometry/Geometry 변환기를
+/// 거쳐) 바로 넣을 수 있다.
 /// </summary>
 public static class PathBuilder
 {
@@ -32,13 +32,13 @@ public static class PathBuilder
         return sb.ToString().TrimEnd();
     }
 
-    /// <summary>Reduces a window to at most <paramref name="maxPoints"/> points for rendering, using
-    /// min/max-per-bucket decimation so spikes survive (unlike naive stride sampling). Used by pages that
-    /// keep large windows (e.g. GraphDetailSearchViewModel's up-to-3600-sample full range) so that
-    /// PathFromArray — and the WPF Path element parsing/rendering the result — isn't redone at full
-    /// resolution on every mouse-move tick during pan/zoom, which is what caused visible lag on that page.
-    /// The returned array's own min/max equal the source's, since every bucket's extremes are kept, so
-    /// callers can safely run ComputeReferenceLines against the downsampled array too.</summary>
+    /// <summary>렌더링용으로 창(window)을 최대 <paramref name="maxPoints"/>개 점으로 줄인다. 구간별
+    /// 최소/최대 샘플링을 써서 스파이크가 사라지지 않는다(단순 간격 추출과 다름). 큰 창을 쓰는 페이지(예:
+    /// GraphDetailSearchViewModel의 최대 3600샘플 전체 범위)에서, PathFromArray와 그 결과를 파싱/렌더링하는
+    /// WPF Path 요소가 팬/줌 중 마우스를 움직일 때마다 전체 해상도로 다시 계산되지 않게 하려는 것이다 —
+    /// 그 페이지에서 눈에 띄는 지연이 생긴 원인이 이것이었다. 반환 배열의 최소/최대는 원본과 같다
+    /// (모든 구간의 극값을 유지하므로) — 그래서 호출자는 ComputeReferenceLines도 다운샘플링된 배열에
+    /// 안전하게 쓸 수 있다.</summary>
     public static double[] Downsample(IReadOnlyList<double> arr, int maxPoints)
     {
         int n = arr.Count;
@@ -67,7 +67,7 @@ public static class PathBuilder
         return result;
     }
 
-    /// <summary>Convenience overload that derives min/max (with the same +/-2 padding used for the main chart).</summary>
+    /// <summary>최소/최대를 직접 구하는 편의 오버로드(메인 차트에 쓰던 것과 같은 ±2 패딩 적용).</summary>
     public static string PathFromArrayAutoRange(IReadOnlyList<double> arr, double w, double h, double padTop, double padBottom, double pad = 0)
     {
         double min = arr.Count == 0 ? 0 : arr[0];
@@ -80,9 +80,8 @@ public static class PathBuilder
         return PathFromArray(arr, min - pad, max + pad, w, h, padTop, padBottom);
     }
 
-    /// <summary>A flat reference line at one value (점검/최소 threshold overlays) — uses the SAME min/max
-    /// scale as the data path it's drawn alongside, so it lines up with the real data instead of floating
-    /// at an unrelated position.</summary>
+    /// <summary>한 값에 그리는 평평한 기준선(점검/최소 임계값 오버레이) — 함께 그려지는 데이터 경로와
+    /// 같은 최소/최대 스케일을 쓰므로, 엉뚱한 위치에 떠 있지 않고 실제 데이터와 정렬된다.</summary>
     public static string HorizontalLinePath(double value, double min, double max, double w, double h, double padTop, double padBottom)
     {
         double usableH = h - padTop - padBottom;
@@ -93,11 +92,10 @@ public static class PathBuilder
         return $"M0,{yStr} L{w.ToString("0.##", CultureInfo.InvariantCulture)},{yStr}";
     }
 
-    /// <summary>점검(check)/최소(minimum) reference thresholds for one window of samples — no real spec
-    /// table exists yet, so these are placeholder margins derived from the window's own spread (flat-line
-    /// fallback so the lines don't collapse onto the data when it isn't moving at all). Shared by every
-    /// chart that overlays these lines (Overview lanes, drill-in detail view, 그래프 상세검색) so they all
-    /// agree on the same thresholds for the same data.</summary>
+    /// <summary>샘플 한 창에 대한 점검(check)/최소(minimum) 기준 임계값 — 실제 규격 표가 아직 없어서 창
+    /// 자체의 편차에서 뽑은 임시 마진이다(데이터가 전혀 움직이지 않을 때 선이 데이터 위에 겹치지 않도록
+    /// 평평한 선 폴백 포함). 이 선을 덧그리는 모든 차트(Overview 레인, 드릴인 상세 보기, 그래프 상세검색)가
+    /// 공유하므로 같은 데이터에 대해 모두 같은 임계값을 쓴다.</summary>
     public static (double CheckedValue, double MinimumValue, double AxisMin, double AxisMax) ComputeReferenceLines(IReadOnlyList<double> window)
     {
         double dataMin = window.Count > 0 ? window.Min() : 0;
@@ -111,10 +109,9 @@ public static class PathBuilder
         return (checkedValue, minimumValue, axisMin, axisMax);
     }
 
-    /// <summary>Same shape as <see cref="ComputeReferenceLines(IReadOnlyList{double})"/> but for REAL
-    /// threshold values (from ThresholdRepository/SetValue.db) instead of the data-derived placeholder
-    /// guess above — the axis is expanded to fit whichever is wider, the data's own spread or the two
-    /// threshold lines, so both are always visible together.</summary>
+    /// <summary><see cref="ComputeReferenceLines(IReadOnlyList{double})"/>와 같은 형태이지만 데이터에서 뽑은
+    /// 위의 임시 추정값 대신 실제 임계값(ThresholdRepository/SetValue.db)을 쓴다 — 축은 데이터 자체의 편차와
+    /// 두 임계선 중 더 넓은 쪽에 맞게 확장되어, 둘 다 항상 함께 보인다.</summary>
     public static (double CheckedValue, double MinimumValue, double AxisMin, double AxisMax) ComputeReferenceLines(
         IReadOnlyList<double> window, double checkedValue, double minimumValue)
     {
@@ -122,7 +119,7 @@ public static class PathBuilder
         double dataMax = window.Count > 0 ? window.Max() : 0;
         double axisMin = Math.Min(dataMin, minimumValue);
         double axisMax = Math.Max(dataMax, checkedValue);
-        if (axisMax <= axisMin) axisMax = axisMin + 1; // degenerate case: flat data exactly at a flat threshold
+        if (axisMax <= axisMin) axisMax = axisMin + 1; // 퇴화 경우: 평평한 데이터가 평평한 임계값과 정확히 같음
         return (checkedValue, minimumValue, axisMin, axisMax);
     }
 }

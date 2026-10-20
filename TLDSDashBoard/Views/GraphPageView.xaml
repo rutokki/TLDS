@@ -65,8 +65,8 @@
                 </DockPanel>
             </Border>
 
-            <!-- Empty state: no real _file_log rows for [now − 10분, now] (e.g. TLDS.exe not running). The
-                 reason (incl. which hour file was looked for) comes from MainViewModel.ChannelDataEmptyMessage. -->
+            <!-- 빈 상태: [현재 − 10분, 현재]에 실제 _file_log 행이 없음(예: TLDS.exe가 실행 중이 아님). 이유(어느 시간
+                 파일을 찾았는지 포함)는 MainViewModel.ChannelDataEmptyMessage에서 온다. -->
             <Border Style="{StaticResource Card}" Padding="24,48"
                     Visibility="{Binding ChannelDataEmptyMessage, Converter={StaticResource NullToVisibilityConverter}}">
                 <TextBlock Style="{StaticResource EmptyStateText}" Text="{Binding ChannelDataEmptyMessage}" TextWrapping="Wrap"/>

@@ -8,15 +8,15 @@
     <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Mono,Consolas,Consolas</FontFamily>
 
-    <!-- ComboBox's SelectionBoxItemTemplate (used by our custom ComboBox template below to render the
-         closed box) is only auto-populated from ItemTemplate, NOT from DisplayMemberPath — with only
-         DisplayMemberPath set, the closed box falls back to the raw item's ToString(). So every ComboBox
-         bound to a Station/TrackCircuit (both expose Name) uses this ItemTemplate instead of DisplayMemberPath. -->
+    <!-- 우리가 만든 ComboBox 템플릿(아래)이 닫힌 상자를 그리는 데 쓰는 SelectionBoxItemTemplate은 ItemTemplate에서만
+         자동으로 채워지고 DisplayMemberPath에서는 채워지지 않는다 — DisplayMemberPath만 지정하면 닫힌 상자는
+         항목의 ToString()으로 폴백한다. 그래서 Station/TrackCircuit(둘 다 Name을 가짐)에 바인딩하는 모든
+         ComboBox는 DisplayMemberPath 대신 이 ItemTemplate을 쓴다. -->
     <DataTemplate x:Key="NameItemTemplate">
         <TextBlock Text="{Binding Name}" Foreground="{StaticResource TextPrimaryBrush}"/>
     </DataTemplate>
 
-    <!-- ===================== Base implicit styles ===================== -->
+    <!-- ===================== 기본 암시적 스타일 ===================== -->
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
@@ -29,7 +29,7 @@
         <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
     </Style>
 
-    <!-- ===================== Dark ScrollBar ===================== -->
+    <!-- ===================== 어두운 ScrollBar ===================== -->
     <Style x:Key="DarkScrollBarThumb" TargetType="Thumb">
         <Setter Property="Template">
             <Setter.Value>
@@ -40,11 +40,10 @@
         </Setter>
     </Style>
 
-    <!-- This style used to hardcode Width=10 on the Track, which is correct for a vertical scrollbar's
-         thickness but wrong for a horizontal one — there "Width" is the track's LENGTH, so it forced every
-         horizontal scrollbar down to a 10px-long sliver. The app only ever had vertical ScrollViewers before
-         DataGrid was introduced, so this went unnoticed. Now orientation-aware: thickness is Width for
-         vertical, Height for horizontal, and the Track itself follows the ScrollBar's real Orientation. -->
+    <!-- 이 스타일은 예전에 Track에 Width=10을 하드코딩했는데, 세로 스크롤바의 두께로는 맞지만 가로 스크롤바에서는
+         "Width"가 트랙의 길이라서 모든 가로 스크롤바가 10px짜리 조각으로 줄어들었다. DataGrid가 도입되기
+         전에는 앱에 세로 ScrollViewer만 있어서 눈에 띄지 않았다. 이제는 방향을 인식한다: 두께는 세로면 Width,
+         가로면 Height이고, Track 자체도 ScrollBar의 실제 Orientation을 따른다. -->
     <Style x:Key="{x:Type ScrollBar}" TargetType="ScrollBar">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Template">
@@ -84,7 +83,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- ===================== Card container ===================== -->
+    <!-- ===================== 카드 컨테이너 ===================== -->
     <Style x:Key="Card" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource PanelBgBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush1}"/>
@@ -96,7 +95,7 @@
         <Setter Property="CornerRadius" Value="12"/>
     </Style>
 
-    <!-- Clickable card (secondary metric cards) -->
+    <!-- 클릭 가능한 카드(보조 지표 카드) -->
     <Style x:Key="ClickableCard" TargetType="Border" BasedOn="{StaticResource Card}">
         <Setter Property="Cursor" Value="Hand"/>
         <Style.Triggers>
@@ -106,13 +105,12 @@
         </Style.Triggers>
     </Style>
 
-    <!-- ===================== Text presets ===================== -->
-    <!-- Every keyed TextBlock style below is BasedOn the implicit TextBlock style so it inherits
-         Foreground=TextPrimaryBrush from it — an explicit Style="{StaticResource X}" otherwise replaces
-         the implicit style entirely instead of layering on top of it, so without BasedOn here, any of
-         these that don't set their own Foreground silently fall back to TextBlock's real default (black).
-         SectionTitle/MonoValueBig/MonoValueMedium were exactly that: titles and KPI numbers rendering in
-         black because they never set Foreground and had nothing to inherit it from. -->
+    <!-- ===================== 텍스트 프리셋 ===================== -->
+    <!-- 아래 키가 있는 TextBlock 스타일은 모두 암시적 TextBlock 스타일을 BasedOn으로 삼아 거기서
+         Foreground=TextPrimaryBrush를 물려받는다 — 명시적인 Style="{StaticResource X}"는 암시적 스타일 위에 겹쳐지지
+         않고 통째로 대체하므로, 여기서 BasedOn이 없으면 자체 Foreground를 지정하지 않은 스타일은 조용히 TextBlock의
+         실제 기본값(검정)으로 돌아간다. SectionTitle/MonoValueBig/MonoValueMedium이 바로 그랬다: Foreground를 지정하지
+         않고 물려받을 곳도 없어서 제목과 KPI 숫자가 검정으로 그려졌다. -->
     <Style x:Key="LabelUppercase" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="11.5"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
@@ -141,8 +139,8 @@
         <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
     </Style>
 
-    <!-- Centered placeholder shown over an empty result area (before the first 조회, or when a 조회 returns
-         nothing) — so a blank grid/chart reads as "nothing queried yet" rather than as a broken screen. -->
+    <!-- 빈 결과 영역 위에 가운데 표시하는 안내 문구(첫 조회 전, 또는 조회 결과가 없을 때) — 빈 표/차트가
+         고장 난 화면이 아니라 "아직 조회 안 함"으로 읽히게 한다. -->
     <Style x:Key="EmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
@@ -153,8 +151,8 @@
         <Setter Property="IsHitTestVisible" Value="False"/>
     </Style>
 
-    <!-- Lane-chart max/min axis value, drawn on a small panel-colored backing so it stays readable where
-         it overlaps a dashed 점검/최소 reference line running along the lane's top or bottom edge. -->
+    <!-- 레인 차트의 최대/최소 축 값. 패널 색 배경 위에 그려서, 레인의 위/아래 가장자리를 따라 지나가는
+         점검/최소 점선 기준선과 겹쳐도 읽을 수 있게 한다. -->
     <Style x:Key="LaneAxisLabelBox" TargetType="Border">
         <Setter Property="Background" Value="#CC181C22"/>
         <Setter Property="CornerRadius" Value="3"/>
@@ -182,7 +180,7 @@
         <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
     </Style>
 
-    <!-- ===================== Flat / ghost button ===================== -->
+    <!-- ===================== 플랫 / 고스트 버튼 ===================== -->
     <Style x:Key="FlatButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -229,11 +227,11 @@
         </Setter>
     </Style>
 
-    <!-- ===================== Form controls (filter bars) ===================== -->
+    <!-- ===================== 폼 컨트롤 (필터 바) ===================== -->
 
-    <!-- ComboBox's default theme hardcodes the drop-down popup as a plain white system popup, which combined
-         with our white Foreground made dropdown text unreadable — so unlike the other controls here, this needs
-         a full ControlTemplate (property Setters alone don't reach the popup's own background). -->
+    <!-- ComboBox의 기본 테마는 드롭다운 팝업을 일반 흰색 시스템 팝업으로 하드코딩하는데, 우리의 흰색 Foreground와
+         겹쳐 드롭다운 글자를 읽을 수 없게 된다 — 그래서 여기 다른 컨트롤과 달리 ControlTemplate 전체가 필요하다
+         (속성 Setter만으로는 팝업 자체의 배경에 닿지 않는다). -->
     <Style TargetType="ComboBoxItem">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
@@ -320,8 +318,8 @@
 
     <Style TargetType="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <!-- Same class of bug as the ComboBox/DatePicker above: setting Foreground alone doesn't reliably
-             reach the Content text in CheckBox's default template. TextElement.Foreground forces it. -->
+        <!-- 위의 ComboBox/DatePicker와 같은 종류의 버그: Foreground만 지정해서는 CheckBox 기본 템플릿의 Content
+             글자에 확실히 닿지 않는다. TextElement.Foreground로 강제한다. -->
         <Setter Property="TextElement.Foreground" Value="{StaticResource TextPrimaryBrush}"/>
         <Setter Property="FontSize" Value="12.5"/>
         <Setter Property="Margin" Value="0,5"/>
@@ -383,9 +381,9 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- The stock DataGridCell template ignores Padding/HorizontalContentAlignment, so text sat flush
-         against the left edge of every column (visibly misaligned under the centered headers). This
-         template actually applies them: values are centered in their column, vertically centered in the row. -->
+    <!-- 기본 DataGridCell 템플릿은 Padding/HorizontalContentAlignment를 무시해서, 모든 컬럼에서 글자가 왼쪽
+         가장자리에 붙어 있었다(가운데 정렬된 헤더 아래에서 눈에 띄게 어긋남). 이 템플릿은 실제로 이를 적용한다:
+         값은 컬럼 안에서 가운데, 행 안에서 세로 가운데로 정렬된다. -->
     <Style TargetType="DataGridCell">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>

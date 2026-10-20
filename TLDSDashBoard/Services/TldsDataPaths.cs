@@ -2,22 +2,21 @@ using System.IO;
 namespace TLDSDashBoard.Services;
 
 /// <summary>
-/// Locates the real TLDS data files the field TLDS program (TLDS.exe) writes. The dashboard is deployed
-/// INTO the TLDS install folder (next to TLDS.exe), so by default it reads the _file_* folders beside its
-/// own exe — the same files TLDS.exe is writing live.
+/// 현장 TLDS 프로그램(TLDS.exe)이 쓰는 실제 TLDS 데이터 파일 위치를 찾는다. 대시보드는 TLDS 설치 폴더
+/// 안(TLDS.exe 옆)에 배포되므로, 기본적으로 자기 exe 옆의 _file_* 폴더를 읽는다 — TLDS.exe가
+/// 실시간으로 쓰고 있는 바로 그 파일들이다.
 ///
-/// For development (running from bin\, where there is no live TLDS install) the root can be pointed at a
-/// real install instead, via the command line <c>--data-root "C:\path\to\tlds"</c> or the environment
-/// variable <c>TLDS_DATA_ROOT</c> (see App.OnStartup).
+/// 개발 중(실시간 TLDS 설치가 없는 bin\에서 실행)에는 명령줄 <c>--data-root "C:\path\to\tlds"</c> 또는
+/// 환경 변수 <c>TLDS_DATA_ROOT</c>로 루트를 실제 설치 폴더로 지정할 수 있다(App.OnStartup 참고).
 ///
-/// Layout (matching a real 쌍룡역 TLDS install):
-///   _file_log/{yyyy}/{MM}/{yyyy-MM-dd-HH}.db   — one file per HOUR, table Level12 (older: Level01)(Time,Idx,Type,Value0..11)
-///                                                  = the actual measured telemetry (Type=0 rows).
-///   _file_db/SetValue.db                        — table Level01(Time,ObjectIndex,Type,Base_N/Caution_N/Warning_N×12)
-///                                                  = fixed threshold settings, one row per device.
-///   _file_db/Event-{yyyy-MM-dd}.db              — one file per DAY, tables Event(...) and Alarm(...).
-///   _file_system/system.xml, index_{역}.xml, rack_{역}.xml — station/track/rack config (StationConfigLoader).
-///   _file_pics/                                 — track-diagram vector file (not yet used).
+/// 구조(실제 쌍룡역 TLDS 설치와 동일):
+///   _file_log/{yyyy}/{MM}/{yyyy-MM-dd-HH}.db   — 시간당 파일 하나, 테이블 Level12(구버전: Level01)(Time,Idx,Type,Value0..11)
+///                                                  = 실제 측정 텔레메트리(Type=0 행).
+///   _file_db/SetValue.db                        — 테이블 Level01(Time,ObjectIndex,Type,Base_N/Caution_N/Warning_N×12)
+///                                                  = 고정 임계값 설정, 장치당 한 행.
+///   _file_db/Event-{yyyy-MM-dd}.db              — 하루당 파일 하나, 테이블 Event(...)와 Alarm(...).
+///   _file_system/system.xml, index_{역}.xml, rack_{역}.xml — 역/궤도/랙 설정(StationConfigLoader).
+///   _file_pics/                                 — 궤도 배선도 벡터 파일(아직 사용 안 함).
 /// </summary>
 public static class TldsDataPaths
 {
@@ -25,10 +24,10 @@ public static class TldsDataPaths
 
     private static string? _rootOverride;
 
-    /// <summary>Folder holding _file_log/_file_db — the exe folder unless overridden (see class summary).</summary>
+    /// <summary>_file_log/_file_db가 들어 있는 폴더 — 재정의하지 않으면 exe 폴더(클래스 요약 참고).</summary>
     public static string Root => _rootOverride ?? AppContext.BaseDirectory;
 
-    /// <summary>Points the data root at another folder (a real TLDS install). Ignored when null/blank.</summary>
+    /// <summary>데이터 루트를 다른 폴더(실제 TLDS 설치)로 지정한다. null/공백이면 무시한다.</summary>
     public static void SetRoot(string? path)
     {
         if (!string.IsNullOrWhiteSpace(path)) _rootOverride = Path.GetFullPath(path.Trim().Trim('"'));

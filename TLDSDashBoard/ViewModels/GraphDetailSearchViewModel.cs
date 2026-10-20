@@ -7,29 +7,28 @@ using TLDSDashBoard.ViewModels.Items;
 namespace TLDSDashBoard.ViewModels;
 
 /// <summary>
-/// 그래프 상세검색: all 6 channels shown as separate stacked lanes (same visual pattern as
-/// MetricGroupView on the Overview page — one full-width row per channel, each with its own real
-/// value axis, since units V/A/Hz/ms don't share a scale), NOT overlaid on one shared chart and NOT
-/// as a grid of small cards — both were tried and rejected in favor of this stacked layout. All 12
-/// lanes share one time window/zoom state (mouse-wheel zoom toward the cursor, left-drag pan, hover
-/// crosshair — same interaction model as the drill-in modal) so zooming or hovering anywhere updates
-/// every lane together. Defaults to the last 1 hour of 1-second-interval samples.
+/// 그래프 상세검색: 모든 채널을 각각 별도의 쌓인 레인으로 보여준다(Overview 페이지의 MetricGroupView와 같은
+/// 시각 패턴 — 채널당 전체 폭 한 행, 각자 실제 값 축을 가짐. 단위(V/A/Hz/ms)가 스케일을 공유하지 않기
+/// 때문이다). 하나의 공유 차트에 겹쳐 그리거나 작은 카드 격자로 하지 않는다 — 둘 다 시도했다가 반려되어
+/// 이 쌓인 레이아웃으로 정해졌다. 모든 레인은 하나의 시간 창/줌 상태를 공유하므로(마우스 휠로 커서 쪽 줌,
+/// 왼쪽 드래그 팬, 호버 크로스헤어 — 드릴인 모달과 같은 상호작용 모델) 어디서 줌하거나 호버해도 모든
+/// 레인이 함께 갱신된다. 기본값은 최근 1시간의 1초 간격 샘플이다.
 /// </summary>
 public sealed class GraphDetailSearchViewModel : ViewModelBase
 {
-    // Rebuilding a ~3600-point WPF Path string for all 12 lanes on every single mouse-move tick during
-    // drag/zoom (Recompute runs on every Pan call) was the source of the reported lag — the chart area is
-    // only a few hundred pixels wide, so points beyond this are visually indistinguishable anyway.
+    // 드래그/줌 중 마우스를 움직일 때마다(Recompute가 Pan 호출마다 실행됨) 모든 레인의 약 3600포인트
+    // WPF Path 문자열을 다시 만드는 것이 보고된 지연의 원인이었다 — 차트 영역은 폭이 몇백 픽셀뿐이라
+    // 이보다 많은 점은 어차피 시각적으로 구분되지 않는다.
     private const int MaxRenderPoints = 400;
 
     private readonly Dictionary<string, double[]> _channelData = new();
     private DateTime[] _fullTimestamps = Array.Empty<DateTime>();
     private int _windowStart;
     private int _windowLength;
-    /// <summary>Real per-channel 점검(Caution)/최소(Warning) thresholds for the selected device, loaded
-    /// once per Search() — index matches ChannelCatalog.ChannelIds order (TRK_FREQ..RX_B_VOLTAGE), same convention as
-    /// MainViewModel.BuildStaticData. Null when SetValue.db has no row for this device, in which case
-    /// Recompute() falls back to a data-derived placeholder instead (see PathBuilder.ComputeReferenceLines).</summary>
+    /// <summary>선택한 장치의 채널별 실제 점검(Caution)/최소(Warning) 임계값. Search()마다 한 번 로드한다 —
+    /// 인덱스는 ChannelCatalog.ChannelIds 순서(TRK_FREQ..RX_B_VOLTAGE)와 같으며, MainViewModel.BuildStaticData와
+    /// 같은 규칙이다. SetValue.db에 이 장치의 행이 없으면 null이고, 그 경우 Recompute()는 대신 데이터에서
+    /// 뽑은 임시값으로 폴백한다(PathBuilder.ComputeReferenceLines 참고).</summary>
     private IReadOnlyList<ChannelThreshold>? _thresholds;
 
     public ObservableCollection<TrackCircuit> AvailableTracks { get; } = new(ReferenceData.Tracks);
@@ -38,10 +37,10 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
     private TrackCircuit _selectedTrack;
     public TrackCircuit SelectedTrack { get => _selectedTrack; set => SetProperty(ref _selectedTrack, value); }
 
-    /// <summary>The stacked lanes, one per channel — built once per Search(), then mutated in place by Recompute() on zoom/pan/hover.</summary>
+    /// <summary>쌓인 레인들, 채널당 하나 — Search()마다 한 번 만들고, 이후 줌/팬/호버 때 Recompute()가 제자리에서 갱신한다.</summary>
     public ObservableCollection<ChannelSeriesVM> Series { get; } = new();
 
-    /// <summary>Real (start/mid/end) timestamps of the displayed window — same 3-label layout as MetricGroupView's time axis.</summary>
+    /// <summary>표시 중인 창의 실제 (시작/중간/끝) 시각 — MetricGroupView의 시간축과 같은 3개 라벨 배치.</summary>
     private string _timeStartLabel = "";
     public string TimeStartLabel { get => _timeStartLabel; private set => SetProperty(ref _timeStartLabel, value); }
     private string _timeMidLabel = "";
@@ -63,31 +62,30 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
 
     // ---- lane sizing (fit-one-screen by default, 세로 확대 grows it) ----
 
-    /// <summary>Unzoomed per-lane height in pixels — set by the View from its ScrollViewer's actual
-    /// viewport height (viewport / 12), so all 12 lanes fit on screen with no scrolling at LaneHeightScale
-    /// == 1. See GraphDetailSearchView.LanesScroll_SizeChanged.</summary>
+    /// <summary>확대하지 않은 레인 하나의 높이(픽셀) — 뷰가 ScrollViewer의 실제 뷰포트 높이로 설정한다
+    /// (뷰포트 높이 ÷ 채널 수). 그래서 LaneHeightScale == 1일 때 모든 레인이 스크롤 없이 한 화면에 들어간다.
+    /// GraphDetailSearchView.LanesScroll_SizeChanged 참고.</summary>
     private double _baseLaneHeight = 54;
     private double _laneHeightScale = 1.0;
 
-    /// <summary>The actual per-lane pixel height bound by both the label column and the chart column so
-    /// their rows stay aligned. Recomputed whenever the base height or the zoom scale changes.</summary>
+    /// <summary>라벨 컬럼과 차트 컬럼이 함께 바인딩하는 실제 레인 한 줄의 픽셀 높이라서 행이 정렬된 채로 유지된다.
+    /// 기본 높이나 줌 배율이 바뀔 때마다 다시 계산된다.</summary>
     public double LaneHeight => _baseLaneHeight * _laneHeightScale;
 
     public void SetBaseLaneHeight(double pixels)
     {
-        // Subtract a hair so that summing 12 independently pixel-rounded Border heights back up can never
-        // overshoot the viewport by a pixel — that overshoot was tripping the "Auto" vertical scrollbar
-        // even at the unzoomed fit-one-screen size, which stole a few px of width from the Viewbox-
-        // stretched charts and visibly resized them (see also HasVerticalOverflow below).
+        // 레인마다 개별적으로 픽셀 반올림된 Border 높이를 모두 합쳤을 때 뷰포트를 1픽셀이라도 넘지 않도록
+        // 약간 뺀다 — 그 초과가 확대하지 않은 한 화면 크기에서도 "Auto" 세로 스크롤바를 작동시켜서, Viewbox로
+        // 늘어난 차트의 폭을 몇 픽셀 빼앗아 크기가 눈에 띄게 바뀌게 했다(아래 HasVerticalOverflow도 참고).
         pixels = Math.Max(0, pixels - 0.5);
         if (pixels <= 0 || double.IsNaN(pixels) || Math.Abs(pixels - _baseLaneHeight) < 0.5) return;
         _baseLaneHeight = pixels;
         OnPropertyChanged(nameof(LaneHeight));
     }
 
-    /// <summary>Multiplies LaneHeightScale by <paramref name="factor"/>, clamped to [1, 6] — 1 is the
-    /// "fits one screen" size, higher values intentionally overflow the ScrollViewer's viewport so the
-    /// user can scroll through enlarged lanes.</summary>
+    /// <summary>LaneHeightScale에 <paramref name="factor"/>를 곱하고 [1, 6] 범위로 제한한다 — 1이 "한 화면에
+    /// 맞는" 크기이고, 더 큰 값은 일부러 ScrollViewer 뷰포트를 넘치게 해서 사용자가 확대된 레인을 스크롤해서
+    /// 볼 수 있게 한다.</summary>
     public void AdjustLaneZoom(double factor)
     {
         double next = Math.Clamp(_laneHeightScale * factor, 1.0, 6.0);
@@ -105,25 +103,24 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasVerticalOverflow));
     }
 
-    /// <summary>True once 세로 확대 has actually made the lanes taller than the fit-one-screen baseline.
-    /// The lanes ScrollViewer's vertical scrollbar visibility is bound to this (not to
-    /// <see cref="IsVerticalZoomMode"/>, which is just which mode the mouse wheel is in) so the scrollbar
-    /// — and the width it steals from the charts — only ever appears once there's really something to
-    /// scroll, never as a rounding artifact at the default size.</summary>
+    /// <summary>세로 확대로 레인이 실제로 한 화면 기준보다 커졌을 때 true. 레인 ScrollViewer의 세로 스크롤바
+    /// 표시 여부가 이 값에 바인딩된다(마우스 휠이 어떤 모드인지일 뿐인 <see cref="IsVerticalZoomMode"/>가 아니라)
+    /// — 그래서 스크롤바와 그것이 차트에서 빼앗는 폭이, 정말로 스크롤할 것이 있을 때만 나타나고
+    /// 기본 크기에서 반올림 오차로 나타나는 일이 없다.</summary>
     public bool HasVerticalOverflow => _laneHeightScale > 1.0;
 
     private bool _isVerticalZoomMode;
-    /// <summary>When on, the chart area's mouse wheel resizes lanes (AdjustLaneZoom) instead of doing the
-    /// usual horizontal time zoom — see GraphDetailSearchView.ChartArea_MouseWheel.</summary>
+    /// <summary>켜면 차트 영역의 마우스 휠이 평소의 가로 시간 줌 대신 레인 크기를 조절한다(AdjustLaneZoom)
+    /// — GraphDetailSearchView.ChartArea_MouseWheel 참고.</summary>
     public bool IsVerticalZoomMode { get => _isVerticalZoomMode; set => SetProperty(ref _isVerticalZoomMode, value); }
 
     private bool _showMeasuredLine = true;
-    /// <summary>Toggles the colored measured-data curve (Path) on every lane.</summary>
+    /// <summary>모든 레인에서 색이 있는 측정 데이터 곡선(Path)을 켜고 끈다.</summary>
     public bool ShowMeasuredLine { get => _showMeasuredLine; set => SetProperty(ref _showMeasuredLine, value); }
 
     private bool _showReferenceLines = true;
-    /// <summary>Toggles the dashed 점검/최소 threshold lines (CheckedLinePath + MinimumLinePath) together
-    /// on every lane — they're always a pair around the measured value, so one switch controls both.</summary>
+    /// <summary>모든 레인에서 점선 점검/최소 임계선(CheckedLinePath + MinimumLinePath)을 함께 켜고 끈다 —
+    /// 측정값을 사이에 두고 항상 한 쌍이므로 스위치 하나로 둘 다 제어한다.</summary>
     public bool ShowReferenceLines { get => _showReferenceLines; set => SetProperty(ref _showReferenceLines, value); }
 
     public RelayCommand SearchCommand { get; }
@@ -140,16 +137,16 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         Range.EndDate = end.Date; Range.EndHour = end.Hour; Range.EndMinute = end.Minute;
         SearchCommand = new RelayCommand(Search);
         ResetZoomCommand = new RelayCommand(ResetZoom);
-        // No auto-search on load (OverView is the only page that renders data by default) — this page
-        // starts empty until the user picks a 기간/장치 and clicks 조회.
+        // 시작 시 자동 조회하지 않는다(기본으로 데이터를 그리는 페이지는 OverView뿐) — 이 페이지는 사용자가
+        // 기간/장치를 고르고 조회를 누를 때까지 비어 있다.
     }
 
     private static readonly IChannelDataRepository Repository = new RealTelemetryRepository();
 
-    /// <summary>Queries exactly the selected 기간 — no mock fallback. This page exists to inspect real
-    /// field telemetry, so if <see cref="Repository"/> has no coverage for the requested device/period the
-    /// screen shows nothing (with a status message saying so) rather than silently substituting generated
-    /// placeholder data that could be mistaken for a real reading.</summary>
+    /// <summary>선택한 기간을 정확히 조회한다 — 목(mock) 폴백 없음. 이 페이지는 실제 현장 텔레메트리를 살펴보는
+    /// 용도이므로, <see cref="Repository"/>에 요청한 장치/기간의 데이터가 없으면 화면은 (그 사실을 알리는 상태
+    /// 메시지와 함께) 아무것도 보여주지 않는다. 실제 측정값으로 오인될 수 있는 생성된 가짜 데이터로
+    /// 조용히 대체하지 않는다.</summary>
     private void Search()
     {
         _channelData.Clear();
@@ -172,10 +169,9 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
             statusMessage = $"{SelectedTrack.Name} — 해당 기간의 실데이터가 없습니다 ({ex.Message})";
         }
 
-        // Real 점검/최소 thresholds for the selected device — same source MainViewModel's lanes use, so
-        // this page's reference lines agree with OverView's instead of drawing a data-derived placeholder
-        // that can look "off" (e.g. a flat line right on top of the data) whenever the real Caution/Warning
-        // values are far from this window's own tiny fluctuation range.
+        // 선택한 장치의 실제 점검/최소 임계값 — MainViewModel의 레인이 쓰는 것과 같은 출처라서, 이 페이지의
+        // 기준선이 OverView와 일치한다. 데이터에서 뽑은 임시값을 그리면 실제 Caution/Warning 값이 이 창의
+        // 작은 변동 범위에서 멀 때 "이상해" 보일 수 있다(예: 데이터 바로 위에 겹친 평평한 선).
         try { _thresholds = hasData ? ThresholdRepository.LoadForDevice(SelectedTrack.Idx) : null; }
         catch (Exception) { _thresholds = null; }
 
@@ -187,7 +183,7 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         {
             foreach (var id in ChannelCatalog.ChannelIds)
             {
-                string fmt = ChannelCatalog.ChannelUnit(id) == "Hz" ? "F2" : "F1";
+                string fmt = ChannelCatalog.ChannelFormat(id);
                 Series.Add(new ChannelSeriesVM
                 {
                     Id = id,
@@ -212,8 +208,8 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         Recompute();
         if (!hasData)
         {
-            // Recompute() bails out immediately on an empty window, leaving the previous search's time/range
-            // labels on screen — clear them explicitly so a no-data result reads as empty, not stale.
+            // Recompute()는 창이 비어 있으면 즉시 빠져나가므로 이전 조회의 시간/범위 라벨이 화면에 남는다 —
+            // 데이터 없음 결과가 오래된 값이 아니라 빈 화면으로 읽히도록 명시적으로 지운다.
             TimeStartLabel = TimeMidLabel = TimeEndLabel = RangeLabel = WindowLabel = "";
             HoverTimeLabel = null;
         }
@@ -228,7 +224,7 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         Recompute();
     }
 
-    /// <summary>Mouse-wheel zoom toward the cursor — same behavior as MainViewModel.ZoomDrill, see there for the reasoning.</summary>
+    /// <summary>커서 쪽으로 마우스 휠 줌 — MainViewModel.ZoomDrill과 같은 동작이며, 이유는 그쪽을 참고.</summary>
     public void Zoom(double factor, double anchorFraction)
     {
         int fullLength = _fullTimestamps.Length;
@@ -244,7 +240,7 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         Recompute();
     }
 
-    /// <summary>Drag-to-pan, fractionDelta = drag distance as a fraction of the chart's on-screen width.</summary>
+    /// <summary>드래그로 팬, fractionDelta = 드래그 거리를 차트의 화면상 폭에 대한 비율로 나타낸 값.</summary>
     public void Pan(double fractionDelta)
     {
         int fullLength = _fullTimestamps.Length;
@@ -254,8 +250,8 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
         Recompute();
     }
 
-    /// <summary>Continuous value readout for EVERY lane at once — fraction (0..1) is the cursor's
-    /// position across the shared chart area's on-screen width.</summary>
+    /// <summary>모든 레인의 값을 한 번에 연속으로 읽어낸다 — fraction(0..1)은 공유 차트 영역의 화면상 폭에서
+    /// 커서의 위치다.</summary>
     public void UpdateHover(double fraction)
     {
         if (_windowLength == 0) return;
@@ -297,15 +293,14 @@ public sealed class GraphDetailSearchViewModel : ViewModelBase
             string fmt = s.ValueFormat;
             string latest = window.Length > 0 ? window[^1].ToString(fmt, CultureInfo.InvariantCulture) : "";
 
-            // Downsample once (min/max-per-bucket keeps the true global min/max, so ComputeReferenceLines
-            // and PathFromArray can both run against the smaller array below) instead of at full window
-            // resolution on every zoom/pan tick — see MaxRenderPoints above.
+            // 한 번만 다운샘플링한다(구간별 최소/최대 방식은 전역 최소/최대를 유지하므로, 아래 작은 배열에 대해
+            // ComputeReferenceLines와 PathFromArray를 모두 실행할 수 있다). 줌/팬 틱마다 전체 창 해상도로
+            // 처리하지 않기 위함이다 — 위의 MaxRenderPoints 참고.
             var renderWindow = window.Length > MaxRenderPoints ? PathBuilder.Downsample(window, MaxRenderPoints) : window;
 
-            // Each lane keeps its own real axis (not normalized/overlaid) — units differ (V/A/Hz/ms) so
-            // one shared scale wouldn't be meaningful. Axis is expanded to fit the 점검/최소 lines too.
-            // Real thresholds (see Search()) take priority; only fall back to the data-derived placeholder
-            // when SetValue.db has no row for this device.
+            // 각 레인은 자신의 실제 축을 유지한다(정규화/겹쳐 그리기 아님) — 단위(V/A/Hz/ms)가 달라 하나의 공유
+            // 스케일은 의미가 없기 때문이다. 축은 점검/최소 선까지 포함하도록 확장된다. 실제 임계값(Search() 참고)이
+            // 우선하며, SetValue.db에 이 장치의 행이 없을 때만 데이터에서 뽑은 임시값으로 폴백한다.
             var threshold = _thresholds is not null && ci < _thresholds.Count ? _thresholds[ci] : null;
             var (checkedValue, minimumValue, axisMin, axisMax) = threshold is not null
                 ? PathBuilder.ComputeReferenceLines(renderWindow, threshold.Caution, threshold.Warning)

@@ -6,16 +6,16 @@
              xmlns:views="clr-namespace:TLDSDashBoard.Views"
              mc:Ignorable="d">
 
-    <!-- DataContext is overridden here (not on the UserControl root) so that a Visibility binding set
-         from outside (against MainViewModel, e.g. in MainWindow.xaml) keeps working — see MetricGroupView
-         for the same pattern. Overriding it on the root itself would silently break that outer binding. -->
+    <!-- DataContext를 UserControl 루트가 아니라 여기서 재정의해서, 바깥(MainViewModel에 대한 것, 예: MainWindow.xaml)에서
+         지정한 Visibility 바인딩이 계속 동작하게 한다 — 같은 패턴은 MetricGroupView 참고. 루트 자체에서
+         재정의하면 그 바깥 바인딩이 조용히 깨진다. -->
     <Grid DataContext="{Binding TrainOccupancy}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Filter bar -->
+        <!-- 필터 바 -->
         <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,0,16">
             <StackPanel>
                 <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
