@@ -42,10 +42,13 @@ public static class ThresholdRepository
         var result = new List<ChannelThreshold>(ChannelCatalog.ChannelCount);
         for (int i = 0; i < ChannelCatalog.ChannelCount; i++)
         {
-            double baseVal = Convert.ToDouble(reader[$"Base_{i}"]);
-            double caution = Convert.ToDouble(reader[$"Caution_{i}"]);
-            double warning = Convert.ToDouble(reader[$"Warning_{i}"]);
-            result.Add(new ChannelThreshold(baseVal, caution, warning));
+            // SetValue.db도 _file_log의 Value와 같은 원시 장치 정수 단위로 저장되어 있다(예: Base_2=501은 5.01 Hz).
+            // 측정값과 같은 Scale/Decimals를 적용해야 점검/최소선이 측정값과 같은 단위로 그려진다 —
+            // 적용하지 않으면 주파수/전압 4개 채널에서 선이 10~100배 큰 위치에 그려졌다.
+            double scale = ChannelCatalog.ChannelScaleAt(i);
+            int decimals = ChannelCatalog.ChannelDecimals(ChannelCatalog.ChannelIds[i]);
+            double ToReal(string column) => Math.Round(Convert.ToDouble(reader[$"{column}_{i}"]) * scale, decimals);
+            result.Add(new ChannelThreshold(ToReal("Base"), ToReal("Caution"), ToReal("Warning")));
         }
         return result;
     }

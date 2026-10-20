@@ -77,8 +77,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- 필터(한 행) + 동작 버튼(한 행) — WrapPanel 하나로 합치지 않고 두 행으로 나눠서, 버튼 묶음이
-                             어정쩡하게 중간에서 줄바꿈되며 갈라지는 일이 없게 한다. -->
+                        <!-- 필터(기간/역) — 동작 버튼(조회/CSV 저장/인쇄/닫기)은 검색 조건 체크박스 아래 줄로 옮겼다(아래 참고). -->
                         <StackPanel Grid.Row="0" Margin="0,0,0,12">
                             <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="검색 기간" Style="{StaticResource FilterLabel}"/>
@@ -87,21 +86,6 @@
                                 <TextBlock Text="역 선택" Style="{StaticResource FilterLabel}"/>
                                 <ComboBox ItemsSource="{Binding Stations}" SelectedItem="{Binding SelectedStation}"
                                           ItemTemplate="{StaticResource NameItemTemplate}" Margin="0,0,0,6"/>
-                            </WrapPanel>
-
-                            <WrapPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding SearchCommand}" Margin="0,0,8,0">
-                                    <TextBlock Text="조회"/>
-                                </Button>
-                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding ExportCsvCommand}" Margin="0,0,8,0">
-                                    <TextBlock Text="CSV 저장"/>
-                                </Button>
-                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding PrintCommand}" Margin="0,0,8,0">
-                                    <TextBlock Text="인쇄"/>
-                                </Button>
-                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding CloseCommand}">
-                                    <TextBlock Text="닫기"/>
-                                </Button>
                             </WrapPanel>
                         </StackPanel>
 
@@ -147,6 +131,23 @@
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
                             </StackPanel>
+
+                            <!-- 동작 버튼 줄 — 검색 조건(체크박스, 시간대 제외) 바로 아래, 결과 표 바로 위. 버튼 묶음이
+                                 어정쩡하게 중간에서 줄바꿈되며 갈라지지 않도록 필터와 따로 한 줄로 둔다. -->
+                            <WrapPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding SearchCommand}" Margin="0,0,8,0">
+                                    <TextBlock Text="조회"/>
+                                </Button>
+                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding ExportCsvCommand}" Margin="0,0,8,0">
+                                    <TextBlock Text="CSV 저장"/>
+                                </Button>
+                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding PrintCommand}" Margin="0,0,8,0">
+                                    <TextBlock Text="인쇄"/>
+                                </Button>
+                                <Button Style="{StaticResource FilterActionButton}" Command="{Binding CloseCommand}">
+                                    <TextBlock Text="닫기"/>
+                                </Button>
+                            </WrapPanel>
                         </StackPanel>
 
                         <TextBlock Grid.Row="1" Style="{StaticResource HintText}" HorizontalAlignment="Right" VerticalAlignment="Bottom">

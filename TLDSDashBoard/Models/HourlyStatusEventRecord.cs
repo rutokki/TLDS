@@ -15,8 +15,8 @@ public enum HourlyStatusCategory
 /// <summary>One row of the 시간별 상태 출력 (hourly status output) result table.</summary>
 public sealed class HourlyStatusEventRecord
 {
-    public required string OccurredAt { get; init; }
-    public required string StationName { get; init; }
-    public required string DeviceName { get; init; }
-    public required string Content { get; init; }
+    public required string OccurredAt { get; init; } // 발생시각
+    public required string StationName { get; init; } // 역명
+    public required string DeviceName { get; init; } // 장치명
+    public required string Content { get; init; } // 내용
 }
