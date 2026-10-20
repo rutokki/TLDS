@@ -128,10 +128,15 @@ public sealed class HourlyStatusViewModel : ViewModelBase
     {
         if (options.All(o => o.IsChecked && o.PickedDevice is null)) return rows.ToList();
         var active = options.Where(o => o.IsChecked).ToList();
-        return rows.Where(r => active.Any(o => o.PickedDevice is { } device
-            ? IsDevice(r.DeviceName, device)
-            : o.Keywords.Any(k => r.Content.Contains(k, StringComparison.Ordinal)))).ToList();
+        return rows.Where(r => active.Any(o => Matches(o, r))).ToList();
     }
+
+    /// <summary>행이 조건 하나에 속하는지: 장치를 골랐으면 장치명으로, 아니면 이벤트 내용의 키워드로 판단한다.
+    /// 체크 여부는 보지 않으므로, 체크된 조건만 고르는 일은 호출한 쪽(<see cref="ApplyConditions"/>)이 한다.</summary>
+    private static bool Matches(HourlyStatusConditionOption option, HourlyStatusEventRecord row) =>
+        option.PickedDevice is { } device
+            ? IsDevice(row.DeviceName, device)
+            : option.Keywords.Any(k => row.Content.Contains(k, StringComparison.Ordinal));
 
     private HourlyStatusCategoryGroup _selectedGroup;
     /// <summary>오른쪽에 표시할 카테고리 그리드. 순전히 표시 전환용이다 — 모든 카테고리의 데이터는 이미
@@ -220,16 +225,18 @@ public sealed class HourlyStatusViewModel : ViewModelBase
         foreach (var group in CategoryGroups)
         {
             // 실제 이벤트 로그만 쓴다 — 비어 있는 카테고리/기간에 대한 샘플 데이터 폴백은 없다.
-            var rows = ApplyConditions(realByCategory[group.Category], group.ConditionOptions);
+            IReadOnlyList<HourlyStatusEventRecord> candidates = realByCategory[group.Category];
 
             if (ExcludeHourRange)
             {
-                rows = rows.Where(r =>
+                candidates = candidates.Where(r =>
                 {
                     var hour = DateTime.ParseExact(r.OccurredAt, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture).Hour;
                     return hour < ExcludeFromHour || hour >= ExcludeToHour;
                 }).ToList();
             }
+
+            var rows = ApplyConditions(candidates, group.ConditionOptions);
 
             group.Rows.Clear();
             foreach (var row in rows) group.Rows.Add(row);

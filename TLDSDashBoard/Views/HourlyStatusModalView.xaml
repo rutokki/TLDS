@@ -30,6 +30,39 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- 조건 칩: 켜짐(IsChecked)이면 초록 점/테두리, 꺼짐이면 회색으로 흐려진다. 템플릿 안의
+             {Binding Label}은 ToggleButton의 DataContext(= HourlyStatusConditionOption)에서 읽는다.
+             색은 뷰모델이 브러시를 들고 있지 않고 트리거로 바꾼다. -->
+        <Style x:Key="ConditionChip" TargetType="ToggleButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Background="Transparent" BorderBrush="{StaticResource BorderBrush1}"
+                                BorderThickness="1" CornerRadius="14" Padding="12,5">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="Dot" Width="8" Height="8" VerticalAlignment="Center" Fill="{StaticResource TextDimBrush}"/>
+                                <TextBlock x:Name="Lbl" Text="{Binding Label}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                           FontSize="12" Foreground="{StaticResource TextDimBrush}"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource PanelHoverBgBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SuccessBgBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SuccessBrush}"/>
+                                <Setter TargetName="Dot" Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                <Setter TargetName="Lbl" Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <!-- DataContext를 UserControl 루트가 아니라 여기서 재정의한다 — 같은 패턴은 MetricGroupView 참고. -->
@@ -102,7 +135,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
-                                            <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" VerticalAlignment="Center"/>
+                                            <ToggleButton Style="{StaticResource ConditionChip}" IsChecked="{Binding IsChecked}" VerticalAlignment="Center"/>
                                             <!-- Only the 신호설비 이벤트 conditions have DeviceChoices (궤도/신호기/선로전환기 명칭). -->
                                             <ComboBox ItemsSource="{Binding DeviceChoices}" SelectedItem="{Binding SelectedDevice}"
                                                       IsEnabled="{Binding IsChecked}" MinWidth="90" Margin="8,0,0,0"
