@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <!-- ============ 기본 배경 색상 ============ -->
     <Color x:Key="BgColor">#FF101319</Color>
@@ -46,5 +47,10 @@
          선명하고 채도 높게 잡았으며, 위의 부드러운 상태 색상과 구분된다. -->
     <SolidColorBrush x:Key="CheckedLineBrush" Color="#FFFFD740"/>
     <SolidColorBrush x:Key="MinimumLineBrush" Color="#FFFF5252"/>
+
+    <!-- 그래프 선 굵기 — 측정 곡선과 점검/최소 기준선 모두 OverView, 상세보기 모달, 그래프 상세검색이
+         이 값을 함께 쓴다. 얇게 하려면 여기 숫자만 줄이면 된다. -->
+    <sys:Double x:Key="MeasuredLineThickness">1.2</sys:Double>
+    <sys:Double x:Key="ReferenceLineThickness">1</sys:Double>
 
 </ResourceDictionary>

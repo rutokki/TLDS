@@ -112,12 +112,12 @@
                                             <Viewbox Stretch="Fill">
                                                 <Canvas Width="900" Height="90">
                                                     <Path Data="{Binding CheckedLinePath, Converter={StaticResource PathDataConverter}}"
-                                                          Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                                                          Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="{StaticResource ReferenceLineThickness}" StrokeDashArray="4,3"/>
                                                     <Path Data="{Binding MinimumLinePath, Converter={StaticResource PathDataConverter}}"
-                                                          Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                                                          Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="{StaticResource ReferenceLineThickness}" StrokeDashArray="4,3"/>
                                                     <Path Data="{Binding Path, Converter={StaticResource PathDataConverter}}"
                                                           Stroke="{Binding ColorHex, Converter={StaticResource HexToBrushConverter}}"
-                                                          StrokeThickness="2"/>
+                                                          StrokeThickness="{StaticResource MeasuredLineThickness}"/>
                                                 </Canvas>
                                             </Viewbox>
                                             <Border Style="{StaticResource LaneAxisLabelBox}" VerticalAlignment="Top" Margin="0,2,4,0">

@@ -24,7 +24,8 @@ public sealed class MainViewModel : ViewModelBase
     private static readonly (string Id, string Label)[] NavDefs =
     {
         ("graph", "OverView"), ("graphsearch", "그래프 상세검색"), ("occupancy", "열차점유리스트"),
-        ("trackfault", "궤도 장애/경보"), ("levelrecord", "레벨 기록 리스트"), ("hourlystatus", "시간별 상태 출력")
+        ("trackfault", "궤도 장애/경보"), ("levelrecord", "레벨 기록 리스트"), ("trackvoltage", "궤도전압리스트"),
+        ("hourlystatus", "시간별 상태 출력")
     };
 
     private const string ColorNavDotActive = "#FF9F40";
@@ -57,6 +58,7 @@ public sealed class MainViewModel : ViewModelBase
         LevelRecordList = new LevelRecordListViewModel();
         HourlyStatus = new HourlyStatusViewModel();
         GraphDetailSearch = new GraphDetailSearchViewModel();
+        TrackVoltageList = new TrackVoltageListViewModel();
 
         AvailableTracks = new ObservableCollection<TrackCircuit>(ReferenceData.Tracks);
         _selectedTrack = AvailableTracks[0];
@@ -133,6 +135,7 @@ public sealed class MainViewModel : ViewModelBase
     public LevelRecordListViewModel LevelRecordList { get; } // 전압 리스트 검색 모델
     public HourlyStatusViewModel HourlyStatus { get; } // OverView 선택 모델
     public GraphDetailSearchViewModel GraphDetailSearch { get; } // 상세 그래프 검색 모델
+    public TrackVoltageListViewModel TrackVoltageList { get; } // 궤도전압리스트(측정/기준값 + 점검·최소 % 저장) 모델
 
     // ==================== 내비게이션 상태 ====================
 
@@ -151,6 +154,9 @@ public sealed class MainViewModel : ViewModelBase
 
     private bool _isLevelRecordActive;
     public bool IsLevelRecordActive { get => _isLevelRecordActive; private set => SetProperty(ref _isLevelRecordActive, value); }
+
+    private bool _isTrackVoltageActive;
+    public bool IsTrackVoltageActive { get => _isTrackVoltageActive; private set => SetProperty(ref _isTrackVoltageActive, value); }
 
     private bool _isGraphActive;
     public bool IsGraphActive { get => _isGraphActive; private set => SetProperty(ref _isGraphActive, value); }
@@ -308,6 +314,9 @@ public sealed class MainViewModel : ViewModelBase
         IsLevelRecordActive = id == "levelrecord";
         IsGraphActive = id == "graph";
         IsGraphSearchActive = id == "graphsearch";
+        IsTrackVoltageActive = id == "trackvoltage";
+        // 이 화면은 보이는 동안만 DB를 읽고 측정값을 갱신한다.
+        TrackVoltageList.SetActive(id == "trackvoltage");
 
         // NavItemVM은 불변(init 전용)이다 — 항목을 바꾸지 말고 컬렉션을 다시 만든다.
         NavItems = new ObservableCollection<NavItemVM>(NavDefs.Select(n => new NavItemVM

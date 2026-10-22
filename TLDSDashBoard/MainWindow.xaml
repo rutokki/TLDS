@@ -34,6 +34,7 @@
                     <views:TrainOccupancyView Visibility="{Binding IsOccupancyActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     <views:TrackFaultListView Visibility="{Binding IsTrackFaultActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     <views:LevelRecordListView Visibility="{Binding IsLevelRecordActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <views:TrackVoltageListView Visibility="{Binding IsTrackVoltageActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     <views:GraphPageView Visibility="{Binding IsGraphActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     <views:GraphDetailSearchView Visibility="{Binding IsGraphSearchActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </Grid>

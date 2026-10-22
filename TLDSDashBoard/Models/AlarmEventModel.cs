@@ -19,8 +19,8 @@ public sealed class AlarmEventModel
 
     public string SeverityLabel => Severity switch
     {
-        AlarmSeverity.Critical => "Critical",
-        AlarmSeverity.Warning => "Warning",
-        _ => "Info"
+        AlarmSeverity.Critical => "장애",
+        AlarmSeverity.Warning => "경고",
+        _ => "정보"
     };
 }

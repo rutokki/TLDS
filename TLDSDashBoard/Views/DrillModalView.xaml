@@ -42,12 +42,12 @@
                     <Viewbox Stretch="Fill" Height="360">
                         <Grid Width="900" Height="240" Background="{StaticResource BgBrush}">
                             <Path Data="{Binding DrillData.CheckedLinePath, Converter={StaticResource PathDataConverter}}"
-                                  Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                                  Stroke="{StaticResource CheckedLineBrush}" StrokeThickness="{StaticResource ReferenceLineThickness}" StrokeDashArray="4,3"/>
                             <Path Data="{Binding DrillData.MinimumLinePath, Converter={StaticResource PathDataConverter}}"
-                                  Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="1.75" StrokeDashArray="4,3"/>
+                                  Stroke="{StaticResource MinimumLineBrush}" StrokeThickness="{StaticResource ReferenceLineThickness}" StrokeDashArray="4,3"/>
                             <Path Data="{Binding DrillData.BigPath, Converter={StaticResource PathDataConverter}}"
                                   Stroke="{Binding DrillData.ColorHex, Converter={StaticResource HexToBrushConverter}}"
-                                  StrokeThickness="2.5"/>
+                                  StrokeThickness="{StaticResource MeasuredLineThickness}"/>
                         </Grid>
                     </Viewbox>
 
